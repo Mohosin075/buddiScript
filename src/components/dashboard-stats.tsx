@@ -97,40 +97,6 @@ export const userStats = [
   },
 ];
 
-export const agentStats = [
-  {
-    title: "Cash In Today",
-    value: "$12,450.00",
-    change: "+15.3%",
-    changeType: "positive" as const,
-    icon: <TrendingUp className="h-4 w-4" />,
-    description: "Total cash deposits",
-  },
-  {
-    title: "Cash Out Today",
-    value: "$8,230.00",
-    change: "+5.7%",
-    changeType: "positive" as const,
-    icon: <TrendingDown className="h-4 w-4" />,
-    description: "Total withdrawals",
-  },
-  {
-    title: "Commission",
-    value: "$245.50",
-    change: "+18.2%",
-    changeType: "positive" as const,
-    icon: <DollarSign className="h-4 w-4" />,
-    description: "This month",
-  },
-  {
-    title: "Active Users",
-    value: "127",
-    change: "+12",
-    changeType: "positive" as const,
-    icon: <Users className="h-4 w-4" />,
-    description: "Served today",
-  },
-];
 
 export const adminStats = [
   {
@@ -141,14 +107,7 @@ export const adminStats = [
     icon: <Users className="h-4 w-4" />,
     description: "Active users",
   },
-  {
-    title: "Total Agents",
-    value: "245",
-    change: "+2.1%",
-    changeType: "positive" as const,
-    icon: <Users className="h-4 w-4" />,
-    description: "Active agents",
-  },
+
   // {
   //   title: "Transaction Volume",
   //   value: "$2.4M",

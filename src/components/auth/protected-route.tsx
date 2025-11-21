@@ -38,9 +38,6 @@ export function ProtectedRoute({
           case "admin":
             router("/admin/dashboard");
             break;
-          case "agent":
-            router("/agent/dashboard");
-            break;
           default:
             router("/user/dashboard");
         }
