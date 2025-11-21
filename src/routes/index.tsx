@@ -11,10 +11,6 @@ import AdminAgentsPage from "@/pages/dashboard/admin/AgentsPage";
 import AdminSettingsPage from "@/pages/dashboard/admin/SettingsPage";
 import AdminTransactionsPage from "@/pages/dashboard/admin/TransactionsPage";
 import AdminUsersPage from "@/pages/dashboard/admin/UserPage";
-import CashOperationsPage from "@/pages/dashboard/agent/CashOperationsPage";
-import CommissionPage from "@/pages/dashboard/agent/Commission";
-import AgentProfilePage from "@/pages/dashboard/agent/Profile";
-import AgentTransactionsPage from "@/pages/dashboard/agent/Transactions";
 import ProfilePage from "@/pages/dashboard/user/Profile";
 import TransactionsPage from "@/pages/dashboard/user/Transactions";
 import WalletPage from "@/pages/dashboard/user/Wallet";
@@ -24,7 +20,6 @@ import Home from "@/pages/Home";
 import PricingPage from "@/pages/Pricing";
 import { createBrowserRouter } from "react-router";
 import AdminRoute from "./AdminRoute";
-import AgentRoute from "./AgentRoute";
 import PrivateRoute from "./PrivateRoute";
 import UserRoute from "./UserRoute";
 import NotFoundPage from "@/pages/NotFoundPage";
@@ -107,57 +102,6 @@ export const router = createBrowserRouter([
         ),
 
         path: "user/wallet",
-      },
-      {
-        Component: () => (
-          <PrivateRoute>
-            <AgentRoute>
-              <CashOperationsPage />
-            </AgentRoute>
-          </PrivateRoute>
-        ),
-        path: "agent/",
-      },
-      {
-        Component: () => (
-          <PrivateRoute>
-            <AgentRoute>
-              <CashOperationsPage />
-            </AgentRoute>
-          </PrivateRoute>
-        ),
-
-        path: "agent/cash-operations",
-      },
-      {
-        Component: () => (
-          <PrivateRoute>
-            <AgentRoute>
-              <AgentProfilePage />
-            </AgentRoute>
-          </PrivateRoute>
-        ),
-        path: "agent/profile",
-      },
-      {
-        Component: () => (
-          <PrivateRoute>
-            <AgentRoute>
-              <CommissionPage />
-            </AgentRoute>
-          </PrivateRoute>
-        ),
-        path: "agent/commission",
-      },
-      {
-        Component: () => (
-          <PrivateRoute>
-            <AgentRoute>
-              <AgentTransactionsPage />
-            </AgentRoute>
-          </PrivateRoute>
-        ),
-        path: "agent/transactions",
       },
       {
         Component: () => (

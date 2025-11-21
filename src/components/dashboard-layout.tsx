@@ -23,7 +23,6 @@ import {
   Menu,
   Search,
   User,
-  UserCheck,
   Users,
   Wallet,
 } from "lucide-react";
@@ -35,7 +34,7 @@ import { toast } from "sonner";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
-  userRole: "user" | "agent" | "admin";
+  userRole: "user" | "admin";
   userName?: string;
   userEmail?: string;
   userAvatar?: string;
@@ -52,29 +51,10 @@ const navigationItems = {
     },
     { icon: User, label: "Profile", href: "/dashboard/user/profile" },
   ],
-  agent: [
-    { icon: Home, label: "Overview", href: "/dashboard/agent" },
-    {
-      icon: Wallet,
-      label: "Cash Operations",
-      href: "/dashboard/agent/cash-operations",
-    },
-    {
-      icon: CreditCard,
-      label: "Transactions",
-      href: "/dashboard/agent/transactions",
-    },
-    // {
-    //   icon: TrendingUp,
-    //   label: "Commission",
-    //   href: "/dashboard/agent/commission",
-    // },
-    { icon: User, label: "Profile", href: "/dashboard/agent/profile" },
-  ],
   admin: [
     { icon: Home, label: "Overview", href: "/dashboard/admin" },
     { icon: Users, label: "Users", href: "/dashboard/admin/users" },
-    { icon: UserCheck, label: "Agents", href: "/dashboard/admin/agents" },
+    
     {
       icon: CreditCard,
       label: "Transactions",
@@ -86,13 +66,11 @@ const navigationItems = {
 
 const roleColors = {
   user: "bg-blue-500",
-  agent: "bg-green-500",
   admin: "bg-purple-500",
 };
 
 const roleLabels = {
   user: "user",
-  agent: "agent",
   admin: "admin",
 };
 
@@ -128,16 +106,10 @@ export function DashboardLayout({
   };
 
   const navItems = navigationItems[userRole];
-  // const navItems =
-  //   navigationItems[
-  //     userRole === "USER" ? "user" : userRole === "AGENT" ? "agent" : "admin"
-  //   ];
 
   const navigateWithRole = (href: string) => {
     if (userRole === "user") {
       navigate(`/dashboard/user${href}`);
-    } else if (userRole === "agent") {
-      navigate(`/dashboard/agent${href}`);
     } else if (userRole === "admin") {
       navigate(`/dashboard/admin${href}`);
     }
