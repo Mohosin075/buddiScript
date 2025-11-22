@@ -9,7 +9,7 @@ export interface User {
     phone: string;
     contact: string;
     location: string;
-    role: "user" | "agent" | "admin";
+    role: "user" | "admin";
     status: "active" | "blocked" | "pending";
     balance?: number;
     createdAt: string;

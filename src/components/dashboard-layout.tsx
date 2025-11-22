@@ -16,7 +16,6 @@ import { logout } from "@/redux/slices/authSlice";
 import Cookie from "js-cookie";
 import {
   Bell,
-  CreditCard,
   Home,
   HomeIcon,
   LogOut,
@@ -43,24 +42,11 @@ interface DashboardLayoutProps {
 const navigationItems = {
   user: [
     { icon: Home, label: "Overview", href: "/dashboard/user" },
-    { icon: Wallet, label: "Wallet", href: "/dashboard/user/wallet" },
-    {
-      icon: CreditCard,
-      label: "Transactions",
-      href: "/dashboard/user/transactions",
-    },
     { icon: User, label: "Profile", href: "/dashboard/user/profile" },
   ],
   admin: [
     { icon: Home, label: "Overview", href: "/dashboard/admin" },
     { icon: Users, label: "Users", href: "/dashboard/admin/users" },
-    
-    {
-      icon: CreditCard,
-      label: "Transactions",
-      href: "/dashboard/admin/transactions",
-    },
-    // { icon: Settings, label: "Settings", href: "/dashboard/admin/settings" },
   ],
 };
 

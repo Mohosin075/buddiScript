@@ -8,7 +8,7 @@ import { useAppSelector } from "@/redux/hooks";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
-  allowedRoles?: ("user" | "agent" | "admin")[];
+  allowedRoles?: ("user" | "admin")[];
   redirectTo?: string;
 }
 
@@ -25,7 +25,7 @@ export function ProtectedRoute({
   useEffect(() => {
     if (!isLoading) {
       if (!isAuthenticated) {
-        router(redirectTo);
+        router(redirectTo); 
         return;
       }
 
@@ -75,7 +75,7 @@ export interface User {
     phone: string;
     contact: string;
     location: string;
-    role: "user" | "agent" | "admin";
+    role: "user" | "admin";
     status: "active" | "blocked" | "pending";
     balance?: number;
     createdAt: string;

@@ -107,21 +107,4 @@ export const adminStats = [
     icon: <Users className="h-4 w-4" />,
     description: "Active users",
   },
-
-  // {
-  //   title: "Transaction Volume",
-  //   value: "$2.4M",
-  //   change: "+12.5%",
-  //   changeType: "positive" as const,
-  //   icon: <CreditCard className="h-4 w-4" />,
-  //   description: "This month",
-  // },
-  // {
-  //   title: "System Health",
-  //   value: "99.9%",
-  //   change: "0.0%",
-  //   changeType: "neutral" as const,
-  //   icon: <Activity className="h-4 w-4" />,
-  //   description: "Uptime",
-  // },
 ];
