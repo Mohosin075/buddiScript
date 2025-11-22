@@ -1,15 +1,12 @@
 import App from "@/App";
 import AdminLayout from "@/components/layout/AdminLayout";
-import About from "@/pages/About";
 import ForgotPasswordPage from "@/pages/auth/ForgotPassword";
 import LoginPage from "@/pages/auth/Login";
 import OtpPage from "@/pages/auth/OtpPage";
 import SignupPage from "@/pages/auth/Signup";
-import Contact from "@/pages/Contact";
 import AdminDashboardPage from "@/pages/dashboard/admin/AdminDashboardPage";
 import AdminUsersPage from "@/pages/dashboard/admin/UserPage";
 import ProfilePage from "@/pages/dashboard/user/Profile";
-import FAQPage from "@/pages/Faq";
 import Home from "@/pages/Home";
 import { createBrowserRouter } from "react-router";
 import AdminRoute from "./AdminRoute";
@@ -27,19 +24,7 @@ export const router = createBrowserRouter([
         index: true,
         Component: Home,
         path: "/",
-      },
-      {
-        Component: About,
-        path: "about",
-      },
-      {
-        Component: FAQPage,
-        path: "faq",
-      },
-      {
-        Component: Contact,
-        path: "contact",
-      },
+      }
     ],
   },
   {
