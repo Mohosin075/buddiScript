@@ -7,17 +7,10 @@ import OtpPage from "@/pages/auth/OtpPage";
 import SignupPage from "@/pages/auth/Signup";
 import Contact from "@/pages/Contact";
 import AdminDashboardPage from "@/pages/dashboard/admin/AdminDashboardPage";
-import AdminAgentsPage from "@/pages/dashboard/admin/AgentsPage";
-import AdminSettingsPage from "@/pages/dashboard/admin/SettingsPage";
-import AdminTransactionsPage from "@/pages/dashboard/admin/TransactionsPage";
 import AdminUsersPage from "@/pages/dashboard/admin/UserPage";
 import ProfilePage from "@/pages/dashboard/user/Profile";
-import TransactionsPage from "@/pages/dashboard/user/Transactions";
-import WalletPage from "@/pages/dashboard/user/Wallet";
 import FAQPage from "@/pages/Faq";
-import FeaturesPage from "@/pages/Features";
 import Home from "@/pages/Home";
-import PricingPage from "@/pages/Pricing";
 import { createBrowserRouter } from "react-router";
 import AdminRoute from "./AdminRoute";
 import PrivateRoute from "./PrivateRoute";
@@ -44,16 +37,8 @@ export const router = createBrowserRouter([
         path: "faq",
       },
       {
-        Component: FeaturesPage,
-        path: "features",
-      },
-      {
         Component: Contact,
         path: "contact",
-      },
-      {
-        Component: PricingPage,
-        path: "pricing",
       },
     ],
   },
@@ -65,43 +50,11 @@ export const router = createBrowserRouter([
         Component: () => (
           <PrivateRoute>
             <UserRoute>
-              <WalletPage />
-            </UserRoute>
-          </PrivateRoute>
-        ),
-
-        path: "user",
-      },
-      {
-        Component: () => (
-          <PrivateRoute>
-            <UserRoute>
               <ProfilePage />
             </UserRoute>
           </PrivateRoute>
         ),
         path: "user/profile",
-      },
-      {
-        Component: () => (
-          <PrivateRoute>
-            <UserRoute>
-              <TransactionsPage />
-            </UserRoute>
-          </PrivateRoute>
-        ),
-        path: "user/transactions",
-      },
-      {
-        Component: () => (
-          <PrivateRoute>
-            <UserRoute>
-              <WalletPage />
-            </UserRoute>
-          </PrivateRoute>
-        ),
-
-        path: "user/wallet",
       },
       {
         Component: () => (
@@ -117,16 +70,6 @@ export const router = createBrowserRouter([
         Component: () => (
           <PrivateRoute>
             <AdminRoute>
-              <AdminAgentsPage />
-            </AdminRoute>
-          </PrivateRoute>
-        ),
-        path: "admin/agents",
-      },
-      {
-        Component: () => (
-          <PrivateRoute>
-            <AdminRoute>
               <AdminUsersPage />
             </AdminRoute>
           </PrivateRoute>
@@ -134,27 +77,7 @@ export const router = createBrowserRouter([
 
         path: "admin/users",
       },
-      {
-        Component: () => (
-          <PrivateRoute>
-            <AdminRoute>
-              <AdminSettingsPage />
-            </AdminRoute>
-          </PrivateRoute>
-        ),
 
-        path: "admin/settings",
-      },
-      {
-        Component: () => (
-          <PrivateRoute>
-            <AdminRoute>
-              <AdminTransactionsPage />
-            </AdminRoute>
-          </PrivateRoute>
-        ),
-        path: "admin/transactions",
-      },
     ],
   },
   {
