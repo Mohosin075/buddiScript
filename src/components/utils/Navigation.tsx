@@ -20,9 +20,8 @@ export const Navigation = () => {
                 <link.icon className="w-5 h-5" />
               </div>
               {/* Badge for last 3 items */}
-              {index > 0 && (
+              {index > 1 && (
                 <div className="absolute -top-2 -right-3 bg-primary text-primary-foreground rounded-full w-5 h-5 flex items-center justify-center text-xs font-medium">
-                  {index === 1 && 3} {/* Friend requests */}
                   {index === 2 && 5} {/* Notifications */}
                   {index === 3 && 2} {/* Messages */}
                 </div>
@@ -44,4 +43,3 @@ export const Navigation = () => {
   );
 };
 
-export default Navigation;

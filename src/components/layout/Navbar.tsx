@@ -11,32 +11,28 @@ import {
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useGetProfileQuery } from "@/redux/api/userApi";
 import { logout } from "@/redux/slices/authSlice";
-import { DialogTitle } from "@radix-ui/react-dialog";
 import Cookie from "js-cookie";
 import {
   ChevronDown,
   ChevronRight,
-  CreditCard,
   HomeIcon,
   LogOut,
   Menu,
   MessageCircleQuestionMark,
   Search,
-  User,
   X,
 } from "lucide-react";
 import { useState } from "react";
 import { useDispatch } from "react-redux";
 import { Link, NavLink, useNavigate } from "react-router";
 import { toast } from "sonner";
-import Navigation from "../utils/Navigation";
 import { navLinks } from "@/lib/navigation-data";
-import { Dialog } from "../ui/dialog";
+import { Navigation } from "../utils/Navigation";
 
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const [searchText, setSearchText] = useState("");
-  const isUser = localStorage.getItem("userRole");
+  // const isUser = localStorage.getItem("userRole");
   const { data } = useGetProfileQuery();
   const user = data?.data;
 
@@ -124,7 +120,6 @@ export function Navbar() {
             </Button>
 
             {/* Desktop Navigation */}
-            {/* <Navigation /> */}
             <div className="hidden lg:flex items-center space-x-12 mr-10">
               <Navigation />
             </div>
@@ -133,7 +128,7 @@ export function Navbar() {
             <div className="hidden lg:flex items-center space-x-1">
               {isAuthenticated === "true" && user ? (
                 <>
-                  <Avatar className="h-8 w-8">
+                  <Avatar className="h-8 w-8 ring-2! ring-primary-tiny">
                     <AvatarImage
                       src={
                         user?.image ||
@@ -171,7 +166,7 @@ export function Navbar() {
                     >
                       <DropdownMenuLabel className="font-normal">
                         <div className="flex space-x-3 items-center">
-                          <Avatar className="h-14 w-14">
+                          <Avatar className="h-14 w-14 ring-2">
                             <AvatarImage
                               src={
                                 user?.image ||
@@ -262,96 +257,148 @@ export function Navbar() {
       {/* Mobile Bottom Navigation */}
       <div className="fixed bottom-0 left-0 right-0 z-40 lg:hidden border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="flex items-center justify-around py-3">
-          <Navigation />
-          <Dialog>
-            {/* Mobile Menu Trigger */}
-            <Sheet open={isOpen} onOpenChange={setIsOpen}>
-              <SheetTrigger asChild className="lg:hidden">
-                <Button variant="ghost" size="icon">
-                  <Menu className="h-5 w-5" />
-                </Button>
-              </SheetTrigger>
-
-              <SheetContent side="right" className="w-[300px] sm:w-[400px]">
-                <DialogTitle className="sr-only">Mobile Navigation</DialogTitle>
-
-                <div className="flex flex-col space-y-4 mt-4 ml-5">
-                  {/* Mobile Search */}
-                  <div className="flex items-center space-x-2 pb-4 border-b border-border">
-                    <Search className="h-4 w-4 text-muted-foreground" />
-                    <input
-                      type="text"
-                      placeholder="input search text"
-                      value={searchText}
-                      onChange={(e) => setSearchText(e.target.value)}
-                      className="flex-1 bg-transparent border-none focus:outline-none text-sm"
-                    />
+          {navLinks.map((link, index) => (
+            <NavLink
+              key={link.href}
+              to={link.href}
+              className={({ isActive }) =>
+                `group relative flex flex-col items-center justify-center px-3 py-2 text-xs font-medium transition-colors ${
+                  isActive ? "text-primary" : "text-muted-foreground"
+                }`
+              }
+            >
+              {({ isActive }) => (
+                <div className="relative">
+                  <div className="relative flex items-center justify-center">
+                    <link.icon className="w-6 h-6" />
+                    {/* Badge for last 3 items */}
+                    {index > 0 && (
+                      <div className="absolute -top-1 -right-2 bg-primary text-primary-foreground rounded-full w-4 h-4 flex items-center justify-center text-[10px] font-medium">
+                        {index === 1 && 3} {/* Friend requests */}
+                        {index === 2 && 5} {/* Notifications */}
+                        {index === 3 && 2} {/* Messages */}
+                      </div>
+                    )}
                   </div>
+                  {/* Active indicator */}
+                  {isActive && (
+                    <div className="absolute -bottom-3 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-primary rounded-full" />
+                  )}
+                </div>
+              )}
+            </NavLink>
+          ))}
 
-                  {navLinks.map((link) => (
+          {/* Mobile Menu Trigger */}
+          <Sheet open={isOpen} onOpenChange={setIsOpen}>
+            <SheetTrigger asChild className="lg:hidden">
+              <Button variant="ghost" size="icon">
+                <Menu className="h-5 w-5" />
+              </Button>
+            </SheetTrigger>
+
+            <SheetContent
+              side="right"
+              className="w-[320px] bg-popover border-l border-border"
+            >
+              <div className="flex flex-col h-full">
+                {/* Header */}
+                <div className="flex items-center justify-between p-6 border-b border-border">
+                  <Link
+                    to="/"
+                    className="flex items-center space-x-2"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    <img src="/images/logo.svg" alt="logo" className="h-8" />
+                  </Link>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    <X className="h-5 w-5" />
+                  </Button>
+                </div>
+
+                {/* User Info Section */}
+                {isAuthenticated && user && (
+                  <div className="flex space-x-3 items-center mx-6 mt-6">
+                    <Avatar className="h-14 w-14 ring-2">
+                      <AvatarImage
+                        src={
+                          user?.image ||
+                          "https://cdn1.iconfinder.com/data/icons/user-pictures/100/male3-512.png"
+                        }
+                        alt={user?.name}
+                      />
+                      <AvatarFallback>
+                        {user?.name
+                          ?.split(" ")
+                          .map((n) => n[0])
+                          .join("")}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex flex-col">
+                      <p className="font-medium text-lg uppercase">
+                        {user?.name}
+                      </p>
+                      <p className="text-sm text-primary font-medium">
+                        <NavLink to={"/dashboard/user/profile"}>
+                          View Profile
+                        </NavLink>
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Navigation Links */}
+                <div className="flex-1 p-6 space-y-2">
+                  {navLinks.map((link, index) => (
                     <NavLink
                       key={link.href}
                       to={link.href}
                       className={({ isActive }) =>
-                        `text-sm font-medium transition-colors hover:text-primary ${
-                          isActive ? "text-primary" : "text-muted-foreground"
+                        `flex items-center space-x-3 px-3 py-3 rounded-lg text-sm font-medium transition-all ${
+                          isActive
+                            ? "bg-accent text-accent-foreground border-l-2 border-primary"
+                            : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
                         }`
                       }
                       onClick={() => setIsOpen(false)}
                     >
-                      {link.label}
+                      <div className="relative">
+                        <link.icon className="h-5 w-5" />
+                        {/* Badge for last 3 items */}
+                        {index > 1 && (
+                          <div className="absolute -top-1 -right-2 bg-primary text-primary-foreground rounded-full w-4 h-4 flex items-center justify-center text-[10px] font-medium">
+                            {index === 2 && 5} {/* Notifications */}
+                            {index === 3 && 2} {/* Messages */}
+                          </div>
+                        )}
+                      </div>
+                      <span>{link.label}</span>
                     </NavLink>
                   ))}
+                </div>
 
-                  {isAuthenticated && user && (
-                    <div className="border-t border-border pt-4">
-                      <div className="flex items-center space-x-2 mb-4">
-                        <Avatar className="h-8 w-8">
-                          <AvatarFallback>
-                            {user?.name?.charAt(0).toUpperCase()}
-                          </AvatarFallback>
-                        </Avatar>
-
-                        <div>
-                          <p className="text-sm font-medium">{user?.name}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {user?.email}
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center space-x-2 mb-2 text-sm text-muted-foreground">
-                        <span>
-                          @
-                          {user.name?.replace(/\s+/g, "").toLowerCase() ||
-                            "user"}{" "}
-                          ~
-                        </span>
-                      </div>
-
-                      <div className="flex items-center space-x-2 mb-2">
-                        <NavLink
-                          to={
-                            isUser === "USER"
-                              ? "/dashboard/user/profile"
-                              : "/dashboard/admin/transactions"
-                          }
-                          className="flex items-center"
+                {/* Bottom Section */}
+                <div className="p-6 border-t border-border space-y-3">
+                  {isAuthenticated ? (
+                    <>
+                      <div className="space-y-2">
+                        <Button
+                          variant="ghost"
+                          className="w-full justify-start space-x-3 px-3 py-2 h-auto text-sm font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                          onClick={handleLogout}
                         >
-                          {isUser === "USER" ? (
-                            <User className="mr-2 h-4 w-4" />
-                          ) : (
-                            <CreditCard className="mr-2 h-4 w-4" />
-                          )}
-                          {isUser === "USER" ? "Profile" : "Transactions"}
-                        </NavLink>
+                          <LogOut className="h-4 w-4" />
+                          <span>Log out</span>
+                        </Button>
                       </div>
-                    </div>
-                  )}
-
-                  {!isAuthenticated ? (
-                    <div className="border-t border-border pt-4 space-y-2">
-                      <Button variant="ghost" className="w-full" asChild>
+                    </>
+                  ) : (
+                    <div className="space-y-2">
+                      <Button variant="outline" className="w-full" asChild>
                         <Link to="/auth/login" onClick={() => setIsOpen(false)}>
                           Sign In
                         </Link>
@@ -365,20 +412,11 @@ export function Navbar() {
                         </Link>
                       </Button>
                     </div>
-                  ) : (
-                    <Button
-                      variant="ghost"
-                      className="w-full justify-start p-0 h-auto"
-                      onClick={handleLogout}
-                    >
-                      <LogOut className="h-4 w-4" />
-                      Log out
-                    </Button>
                   )}
                 </div>
-              </SheetContent>
-            </Sheet>
-          </Dialog>
+              </div>
+            </SheetContent>
+          </Sheet>
         </div>
       </div>
     </>
