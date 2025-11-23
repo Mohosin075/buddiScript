@@ -12,7 +12,7 @@ export default defineConfig({
     },
   },
   server: {
-    host: true, // allows access via LAN IP
+    host: true, 
     port: 5173, // optional: specify your port
   },
 });
