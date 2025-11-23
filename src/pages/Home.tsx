@@ -5,11 +5,20 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import {
   Bookmark,
-  Check,
   MessageCircle,
   MoreHorizontal,
   Search,
   ThumbsUp,
+} from "lucide-react";
+
+import {
+  BookOpen,
+  BarChart3,
+  Users,
+  Users2,
+  Gamepad2,
+  Settings,
+  Download,
 } from "lucide-react";
 
 export default function HomePage() {
@@ -27,66 +36,33 @@ export default function HomePage() {
                   <h2 className="text-lg font-semibold mb-4">Explore</h2>
                   <div className="space-y-2">
                     {[
-                      "Learning",
-                      "Insights",
-                      "Find friends",
-                      "Bookmarks",
-                      "Group",
-                      "Gaming",
-                      "Settings",
-                      "Save post",
-                    ].map((item, index) => (
+                      { name: "Learning", icon: BookOpen, badge: "New" },
+                      { name: "Insights", icon: BarChart3, badge: null },
+                      { name: "Find friends", icon: Users, badge: null },
+                      { name: "Bookmarks", icon: Bookmark, badge: null },
+                      { name: "Group", icon: Users2, badge: null },
+                      { name: "Gaming", icon: Gamepad2, badge: "New" },
+                      { name: "Settings", icon: Settings, badge: null },
+                      { name: "Save post", icon: Download, badge: null },
+                    ].map((item) => (
                       <div
-                        key={item}
-                        className="flex items-center space-x-3 p-2 rounded-lg hover:bg-accent cursor-pointer"
+                        key={item.name}
+                        className="flex items-center justify-between p-2 rounded-lg hover:bg-accent cursor-pointer transition-colors duration-200"
                       >
-                        <div
-                          className={`w-4 h-4 border border-border rounded ${
-                            [2, 4, 6].includes(index)
-                              ? "bg-primary border-primary"
-                              : ""
-                          }`}
-                        >
-                          {[2, 4, 6].includes(index) && (
-                            <Check className="w-3 h-3 text-primary-foreground" />
-                          )}
+                        <div className="flex items-center space-x-3">
+                          <div
+                            className={`w-8 h-8 rounded-lg flex items-center justify-center bg-secondary text-muted-foreground
+                            }`}
+                          >
+                            <item.icon className="w-4 h-4" />
+                          </div>
+                          <span className="text-sm">{item.name}</span>
                         </div>
-                        <span className="text-sm">{item}</span>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent>
-                  <h2 className="text-lg font-semibold mb-4">Explore</h2>
-                  <div className="space-y-2">
-                    {[
-                      "Learning",
-                      "Insights",
-                      "Find friends",
-                      "Bookmarks",
-                      "Group",
-                      "Gaming",
-                      "Settings",
-                      "Save post",
-                    ].map((item, index) => (
-                      <div
-                        key={item}
-                        className="flex items-center space-x-3 p-2 rounded-lg hover:bg-accent cursor-pointer"
-                      >
-                        <div
-                          className={`w-4 h-4 border border-border rounded ${
-                            [2, 4, 6].includes(index)
-                              ? "bg-primary border-primary"
-                              : ""
-                          }`}
-                        >
-                          {[2, 4, 6].includes(index) && (
-                            <Check className="w-3 h-3 text-primary-foreground" />
-                          )}
-                        </div>
-                        <span className="text-sm">{item}</span>
+                        {item.badge && (
+                          <span className="bg-primary-green text-primary-foreground text-xs px-2 py-1 rounded-md">
+                            {item.badge}
+                          </span>
+                        )}
                       </div>
                     ))}
                   </div>
