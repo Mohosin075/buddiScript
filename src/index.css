@@ -44,6 +44,7 @@ body {
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-primary-tiny: var(--primary-tiny);
+  --color-primary-tiny-2: var(--primary-tiny-2);
   --color-primary-green: var(--primary-green);
   --animate-line-shadow: line-shadow 15s linear infinite;
   @keyframes line-shadow {
@@ -90,6 +91,7 @@ body {
   --sidebar-border: oklch(0.9 0 0);
   --sidebar-ring: oklch(0.55 0.2 250);
   --primary-tiny: oklch(92.461% 0.03818 248.308);
+  --primary-tiny-2: oklch(96.69% 0.0121 248.163);
   --primary-green : oklch(66.304% 0.21813 143.118);
 }
 
