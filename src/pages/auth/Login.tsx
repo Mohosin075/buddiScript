@@ -68,11 +68,7 @@ export default function LoginPage() {
       // Redirect based on role
       switch (result.data.role) {
         case "USER":
-          navigate("/dashboard/user");
-          toast.success(`Welcome Back! ${result.data.name}`);
-          break;
-        case "AGENT":
-          navigate("/dashboard/agent");
+          navigate("/");
           toast.success(`Welcome Back! ${result.data.name}`);
           break;
         case "ADMIN":
