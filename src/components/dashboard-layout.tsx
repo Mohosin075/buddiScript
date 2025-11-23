@@ -42,7 +42,7 @@ interface DashboardLayoutProps {
 const navigationItems = {
   user: [
     { icon: Home, label: "Overview", href: "/dashboard/user" },
-    { icon: User, label: "Profile", href: "/dashboard/user/profile" },
+    { icon: User, label: "Profile", href: "/profile" },
   ],
   admin: [
     { icon: Home, label: "Overview", href: "/dashboard/admin" },

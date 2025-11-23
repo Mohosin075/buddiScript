@@ -6,13 +6,13 @@ import OtpPage from "@/pages/auth/OtpPage";
 import SignupPage from "@/pages/auth/Signup";
 import AdminDashboardPage from "@/pages/dashboard/admin/AdminDashboardPage";
 import AdminUsersPage from "@/pages/dashboard/admin/UserPage";
-import ProfilePage from "@/pages/dashboard/user/Profile";
 import Home from "@/pages/Home";
 import { createBrowserRouter } from "react-router";
 import AdminRoute from "./AdminRoute";
 import PrivateRoute from "./PrivateRoute";
-import UserRoute from "./UserRoute";
 import NotFoundPage from "@/pages/NotFoundPage";
+import ProfilePage from "@/pages/dashboard/user/Profile";
+import UserRoute from "./UserRoute";
 
 export const router = createBrowserRouter([
   {
@@ -24,13 +24,7 @@ export const router = createBrowserRouter([
         index: true,
         Component: Home,
         path: "/",
-      }
-    ],
-  },
-  {
-    Component: AdminLayout,
-    path: "dashboard",
-    children: [
+      },
       {
         Component: () => (
           <PrivateRoute>
@@ -39,8 +33,14 @@ export const router = createBrowserRouter([
             </UserRoute>
           </PrivateRoute>
         ),
-        path: "user/profile",
+        path: "/profile",
       },
+    ],
+  },
+  {
+    Component: AdminLayout,
+    path: "dashboard",
+    children: [
       {
         Component: () => (
           <PrivateRoute>
@@ -62,7 +62,6 @@ export const router = createBrowserRouter([
 
         path: "admin/users",
       },
-
     ],
   },
   {

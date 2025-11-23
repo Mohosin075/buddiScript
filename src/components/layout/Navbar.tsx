@@ -70,7 +70,7 @@ export function Navbar() {
   return (
     <>
       {/* Main Navbar */}
-      <nav className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <nav className="sticky top-0 z-50 w-full border-b bg-background">
         <div className="container px-4 mx-auto flex h-16 items-center justify-between">
           {/* Left side - Logo */}
           <div className="flex items-center space-x-20">
@@ -186,9 +186,7 @@ export function Navbar() {
                               {user?.name}
                             </p>
                             <p className="text-sm text-primary font-medium">
-                              <NavLink to={"/dashboard/user/profile"}>
-                                View Profile
-                              </NavLink>
+                              <NavLink to={"/profile"}>View Profile</NavLink>
                             </p>
                           </div>
                         </div>
@@ -343,9 +341,7 @@ export function Navbar() {
                         {user?.name}
                       </p>
                       <p className="text-sm text-primary font-medium">
-                        <NavLink to={"/dashboard/user/profile"}>
-                          View Profile
-                        </NavLink>
+                        <NavLink to={"/profile"}>View Profile</NavLink>
                       </p>
                     </div>
                   </div>
