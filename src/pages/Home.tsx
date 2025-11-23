@@ -2,17 +2,22 @@ import HelmetTitle from "@/components/layout/HelmetTitle";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
 import {
+  Bell,
   Bookmark,
   Calendar,
   Camera,
+  Edit3,
+  EyeOff,
   FileText,
   MessageCircle,
   MoreHorizontal,
+  MoreVertical,
   Search,
   Send,
+  Share2,
   ThumbsUp,
+  Trash2,
   Video,
 } from "lucide-react";
 
@@ -25,6 +30,14 @@ import {
   Settings,
   Download,
 } from "lucide-react";
+
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export default function HomePage() {
   return (
@@ -78,7 +91,7 @@ export default function HomePage() {
 
           {/* Main Content - Feed Section */}
           <div className="flex-1 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-            <div className="max-w-3xl mx-auto p-6">
+            <div className="max-w-5xl mx-auto p-6">
               {/* Your Story Header */}
               {/* Story Section */}
               <div className="bg-white rounded-lg border border-gray-200 p-4 mb-6">
@@ -205,7 +218,8 @@ export default function HomePage() {
               <Card className="mb-6">
                 <CardContent className="p-0">
                   <div className="p-4">
-                    <div className="flex items-center justify-between mb-4">
+                    {/* Header with user info and menu */}
+                    <div className="flex items-start justify-between mb-4">
                       <div className="flex items-center space-x-3">
                         <Avatar className="h-10 w-10">
                           <AvatarImage src="https://cdn1.iconfinder.com/data/icons/user-pictures/100/male3-512.png" />
@@ -218,104 +232,128 @@ export default function HomePage() {
                           </div>
                         </div>
                       </div>
-                      <Button variant="ghost" size="icon">
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
+
+                      {/* Three-dot dropdown menu */}
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                          >
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent className="w-62" align="end">
+                          {[
+                            { icon: Bookmark, label: "Save Post" },
+                            { icon: Bell, label: "Turn On Notification" },
+                            { icon: EyeOff, label: "Hide" },
+                            { icon: Edit3, label: "Edit Post" },
+                          ].map((item, index) => (
+                            <DropdownMenuItem
+                              key={index}
+                              className="cursor-pointer"
+                            >
+                              <div className="h-10 w-10 bg-primary-tiny flex items-center justify-center mr-2 rounded-full">
+                                <item.icon className="text-primary" />
+                              </div>
+                              {item.label}
+                            </DropdownMenuItem>
+                          ))}
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem className="cursor-pointer text-destructive focus:text-destructive">
+                            <div className="h-10 w-10 bg-primary-tiny flex items-center justify-center mr-2 rounded-full">
+                              <Trash2 className="" />
+                            </div>
+                            Delete Post
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
 
+                    {/* Post content */}
                     <div className="mb-4">
-                      <h3 className="font-semibold mb-2">
+                      <h3 className="font-semibold mb-2 text-lg">
                         Healthy Tracking App
                       </h3>
-                      <p className="text-sm text-muted-foreground">
-                        Just launched our new health tracking application. Stay
-                        fit and healthy with our innovative features!
-                      </p>
                     </div>
 
-                    <div className="flex space-x-2">
-                      <Button variant="outline" size="sm" className="flex-1">
+                    {/* Action buttons - Like, Comment, Share */}
+                    <div className="flex justify-between border-t border-b border-border py-2 mb-4">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="flex-1 text-muted-foreground hover:text-primary"
+                      >
                         <ThumbsUp className="h-4 w-4 mr-2" />
                         Like
                       </Button>
-                      <Button variant="outline" size="sm" className="flex-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="flex-1 text-muted-foreground hover:text-primary"
+                      >
                         <MessageCircle className="h-4 w-4 mr-2" />
                         Comment
                       </Button>
-                      <Button variant="outline" size="sm">
-                        <Bookmark className="h-4 w-4" />
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="flex-1 text-muted-foreground hover:text-primary"
+                      >
+                        <Share2 className="h-4 w-4 mr-2" />
+                        Share
                       </Button>
                     </div>
-                  </div>
 
-                  <div className="border-t border-border p-4 bg-muted/50">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">Save Post</span>
-                      <Badge
-                        variant="secondary"
-                        className="cursor-pointer hover:bg-muted"
-                      >
-                        Save
-                      </Badge>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-              <Card className="mb-6">
-                <CardContent className="p-0">
-                  <div className="p-4">
-                    <div className="flex items-center justify-between mb-4">
+                    {/* Comments section */}
+                    <div className="space-y-4">
+                      {/* Write comment input */}
                       <div className="flex items-center space-x-3">
-                        <Avatar className="h-10 w-10">
-                          <AvatarImage src="https://cdn1.iconfinder.com/data/icons/user-pictures/100/male3-512.png" />
-                          <AvatarFallback>KS</AvatarFallback>
+                        <Avatar className="h-8 w-8">
+                          <AvatarFallback>Y</AvatarFallback>
                         </Avatar>
-                        <div>
-                          <div className="font-semibold">Karim Saif</div>
-                          <div className="text-xs text-muted-foreground">
-                            5 minute ago · Public
+                        <div className="flex-1 bg-input rounded-full px-4 py-2 text-sm cursor-pointer hover:bg-muted/80 text-muted-foreground">
+                          Write a comment...
+                        </div>
+                      </div>
+
+                      {/* View previous comments */}
+                      <div className="text-sm text-muted-foreground cursor-pointer hover:text-primary">
+                        View 4 previous comments
+                      </div>
+
+                      {/* Existing comment */}
+                      <div className="flex space-x-3">
+                        <Avatar className="h-8 w-8">
+                          <AvatarFallback>RS</AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1">
+                          <div className="bg-muted/50 rounded-lg p-3">
+                            <div className="font-semibold text-sm">
+                              Radovan SkillArena
+                            </div>
+                            <p className="text-sm mt-1">
+                              It is a long established fact that a reader will
+                              be distracted by the readable content of a page
+                              when looking at its layout.
+                            </p>
+                          </div>
+                          <div className="flex items-center space-x-4 mt-2 text-xs text-muted-foreground">
+                            <span className="cursor-pointer hover:text-primary">
+                              Like
+                            </span>
+                            <span className="cursor-pointer hover:text-primary">
+                              Reply
+                            </span>
+                            <span className="cursor-pointer hover:text-primary">
+                              Share
+                            </span>
+                            <span>· 21m</span>
                           </div>
                         </div>
                       </div>
-                      <Button variant="ghost" size="icon">
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </div>
-
-                    <div className="mb-4">
-                      <h3 className="font-semibold mb-2">
-                        Healthy Tracking App
-                      </h3>
-                      <p className="text-sm text-muted-foreground">
-                        Just launched our new health tracking application. Stay
-                        fit and healthy with our innovative features!
-                      </p>
-                    </div>
-
-                    <div className="flex space-x-2">
-                      <Button variant="outline" size="sm" className="flex-1">
-                        <ThumbsUp className="h-4 w-4 mr-2" />
-                        Like
-                      </Button>
-                      <Button variant="outline" size="sm" className="flex-1">
-                        <MessageCircle className="h-4 w-4 mr-2" />
-                        Comment
-                      </Button>
-                      <Button variant="outline" size="sm">
-                        <Bookmark className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-
-                  <div className="border-t border-border p-4 bg-muted/50">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">Save Post</span>
-                      <Badge
-                        variant="secondary"
-                        className="cursor-pointer hover:bg-muted"
-                      >
-                        Save
-                      </Badge>
                     </div>
                   </div>
                 </CardContent>
