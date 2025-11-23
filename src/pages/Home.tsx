@@ -491,8 +491,9 @@ export default function HomePage() {
                     </Button>
                   </div>
                   <div className="flex items-center space-x-3 mb-3">
-                    <Avatar className="h-12 w-12">
-                      <AvatarFallback>RS</AvatarFallback>
+                    <Avatar className="h-10 w-10">
+                      <AvatarImage src="images/img11.png" />
+                      <AvatarFallback>KS</AvatarFallback>
                     </Avatar>
                     <div className="flex-1">
                       <div className="font-semibold">Radowan SkillArena</div>
@@ -533,7 +534,7 @@ export default function HomePage() {
                       <input
                         type="text"
                         placeholder="Input search"
-                        className="w-full pl-10 pr-4 py-2 border border-border rounded-lg bg-muted text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                        className="w-full pl-10 pr-4 py-2 border border-border rounded-2xl bg-muted hover:bg-background focus:bg-background text-sm focus:outline-none focus:ring-1 focus:ring-ring"
                       />
                     </div>
 
@@ -544,84 +545,30 @@ export default function HomePage() {
                           name: "Steve Jobs",
                           role: "CEO of Apple",
                           time: "6 minute",
-                          status: "opp",
+                          active: true,
                         },
-                        {
-                          name: "Ryan Roslansky",
-                          role: "",
-                          time: "",
-                          status: "",
-                        },
-                      ].map((friend, index) => (
-                        <div
-                          key={index}
-                          className="flex items-center space-x-3 p-3 rounded-lg hover:bg-accent cursor-pointer"
-                        >
-                          <Avatar className="h-10 w-10">
-                            <AvatarFallback>
-                              {friend.name
-                                .split(" ")
-                                .map((n) => n[0])
-                                .join("")}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="flex-1">
-                            <div className="font-medium">{friend.name}</div>
-                            {friend.role && (
-                              <div className="text-xs text-muted-foreground">
-                                {friend.role} · {friend.time}
-                              </div>
-                            )}
-                            {friend.status && (
-                              <div className="text-xs text-primary">
-                                {friend.status}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent>
-                  <div>
-                    <div className="flex items-center justify-between mb-4">
-                      <h3 className="font-semibold">Your Friends</h3>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-primary text-sm"
-                      >
-                        See All
-                      </Button>
-                    </div>
-
-                    {/* Search Input */}
-                    <div className="relative mb-4">
-                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <input
-                        type="text"
-                        placeholder="Input search"
-                        className="w-full pl-10 pr-4 py-2 border border-border rounded-lg bg-muted text-sm focus:outline-none focus:ring-1 focus:ring-ring"
-                      />
-                    </div>
-
-                    {/* Friend List */}
-                    <div className="space-y-4">
-                      {[
                         {
                           name: "Steve Jobs",
                           role: "CEO of Apple",
                           time: "6 minute",
-                          status: "opp",
+                          active: true,
                         },
                         {
-                          name: "Ryan Roslansky",
-                          role: "",
-                          time: "",
-                          status: "",
+                          name: "Steve Jobs",
+                          role: "CEO of Apple",
+                          time: "6 minute",
+                        },
+                        {
+                          name: "Steve Jobs",
+                          role: "CEO of Apple",
+                          time: "6 minute",
+                          active: true,
+                        },
+                        {
+                          name: "Steve Jobs",
+                          role: "CEO of Apple",
+                          time: "6 minute",
+                          active: true,
                         },
                       ].map((friend, index) => (
                         <div
@@ -629,26 +576,33 @@ export default function HomePage() {
                           className="flex items-center space-x-3 p-3 rounded-lg hover:bg-accent cursor-pointer"
                         >
                           <Avatar className="h-10 w-10">
-                            <AvatarFallback>
-                              {friend.name
-                                .split(" ")
-                                .map((n) => n[0])
-                                .join("")}
-                            </AvatarFallback>
+                            <AvatarImage src="images/img12.png" />
+                            <AvatarFallback>KS</AvatarFallback>
                           </Avatar>
                           <div className="flex-1">
                             <div className="font-medium">{friend.name}</div>
                             {friend.role && (
                               <div className="text-xs text-muted-foreground">
-                                {friend.role} · {friend.time}
-                              </div>
-                            )}
-                            {friend.status && (
-                              <div className="text-xs text-primary">
-                                {friend.status}
+                                {friend.role}
                               </div>
                             )}
                           </div>
+                          {friend && (
+                            <div className="flex items-center space-x-1">
+                              {friend.active === true && (
+                                <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                              )}
+                              <div
+                                className={`text-xs ${
+                                  friend.active === true
+                                    ? "text-green-500"
+                                    : "text-muted-foreground"
+                                }`}
+                              >
+                                <span>{friend.active ? "" : friend.time}</span>
+                              </div>
+                            </div>
+                          )}
                         </div>
                       ))}
                     </div>
