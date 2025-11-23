@@ -14,14 +14,12 @@ import { logout } from "@/redux/slices/authSlice";
 import { DialogTitle } from "@radix-ui/react-dialog";
 import Cookie from "js-cookie";
 import {
-  BellDot,
   ChevronDown,
   ChevronRight,
   CreditCard,
   HomeIcon,
   LogOut,
   Menu,
-  MessageCircle,
   MessageCircleQuestionMark,
   Search,
   User,
@@ -31,6 +29,8 @@ import { useState } from "react";
 import { useDispatch } from "react-redux";
 import { Link, NavLink, useNavigate } from "react-router";
 import { toast } from "sonner";
+import Navigation from "../utils/Navigation";
+import { navLinks } from "@/lib/navigation-data";
 
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
@@ -41,13 +41,6 @@ export function Navbar() {
 
   const isAuthenticated =
     Cookie.get("isAuthenticated") || localStorage.getItem("isAuthenticated");
-
-  const navLinks = [
-    { href: "/", label: "Home", icon: HomeIcon },
-    { href: "/about", label: "About", icon: User },
-    { href: "/notification", label: "Notification", icon: BellDot },
-    { href: "/message", label: "Message", icon: MessageCircle },
-  ];
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -89,7 +82,7 @@ export function Navbar() {
           </Link>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex flex-1 w-full">
+          <div className="hidden lg:flex flex-1 w-full">
             <form onSubmit={handleSearch} className="relative w-full">
               <div className="relative w-full">
                 {/* Left Search Icon */}
@@ -101,17 +94,17 @@ export function Navbar() {
                   placeholder="input search text"
                   value={searchText}
                   onChange={(e) => setSearchText(e.target.value)}
-                  className="w-full pl-10 pr-10 py-2 border border-border rounded-4xl bg-gray-100 text-sm
+                  className="w-full pl-10 pr-10 py-2 border border-border rounded-4xl bg-muted text-sm
                        hover:border-primary
                        focus:border-primary
-                       focus:outline-none focus:ring-1 focus:ring-primary
+                       focus:outline-none focus:ring-1 focus:ring-ring
                        transition-colors duration-200 ease-in-out"
                 />
 
                 {/* Right Clear (X) Icon */}
                 {searchText && (
                   <X
-                    className="absolute right-5 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground cursor-pointer hover:text-red-500"
+                    className="absolute right-5 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground cursor-pointer hover:text-destructive"
                     onClick={clearInput}
                   />
                 )}
@@ -123,33 +116,15 @@ export function Navbar() {
         {/* Right side - User section */}
         <div className="flex items-center space-x-4">
           {/* Search icon for mobile */}
-          <Button variant="ghost" size="icon" className="md:hidden">
+          <Button variant="ghost" size="icon" className="lg:hidden">
             <Search className="h-5 w-5" />
           </Button>
+
           {/* Desktop Navigation */}
-          {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-12 mr-10">
-            {navLinks.map((link) => (
-              <NavLink
-                key={link.href}
-                to={link.href}
-                className={({ isActive }) =>
-                  `text-sm font-medium transition-colors hover:text-primary ${
-                    isActive
-                      ? "text-primary underline underline-offset-4"
-                      : "text-muted-foreground"
-                  }`
-                }
-              >
-                <div className="flex items-center space-x-2">
-                  <link.icon className="w-5 h-5" />
-                  {/* <span>{link.label}</span> */}
-                </div>
-              </NavLink>
-            ))}
-          </div>
+          <Navigation />
+
           {/* Desktop Auth Section */}
-          <div className="hidden md:flex items-center">
+          <div className="hidden lg:flex items-center space-x-1">
             {isAuthenticated === "true" && user ? (
               <>
                 <Avatar className="h-8 w-8">
@@ -168,11 +143,9 @@ export function Navbar() {
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-                  <span>@</span>
-                  <span className="font-medium">
-                    {user.name?.replace(/\s+/g, "").toLowerCase() || "user"}
+                  <span className="font-medium capitalize">
+                    {user.name || "User"}
                   </span>
-                  <span className="text-muted-foreground">~</span>
                 </div>
 
                 <DropdownMenu>
@@ -182,7 +155,6 @@ export function Navbar() {
                       className="relative h-8 w-8 rounded-full"
                     >
                       <ChevronDown className="h-4 w-4" />
-                      {/* here icon */}
                     </Button>
                   </DropdownMenuTrigger>
 
@@ -209,9 +181,11 @@ export function Navbar() {
                           </AvatarFallback>
                         </Avatar>
                         <div className="flex flex-col">
-                          <p className="font-medium text-lg">{user?.name}</p>
-                          <p className="text-sm text-muted-foreground">
-                            <NavLink to={"/profile"}>view profile</NavLink>
+                          <p className="font-medium text-lg uppercase">
+                            {user?.name}
+                          </p>
+                          <p className="text-sm text-primary font-medium">
+                            <NavLink to={"/profile"}>View Profile</NavLink>
                           </p>
                         </div>
                       </div>
@@ -220,8 +194,13 @@ export function Navbar() {
 
                     {/* Dashboard Link */}
                     <DropdownMenuItem asChild className="flex">
-                      <Link to="/settings" className="flex items-center my-2">
-                        <HomeIcon className="mr-2 h-6 w-6" />
+                      <Link
+                        to="/settings"
+                        className="flex items-center my-2 hover:text-primary! text-lg!"
+                      >
+                        <div className="mr-2 h-10 w-10 bg-primary-tiny rounded-full flex items-center justify-center">
+                          <HomeIcon className="rounded-full  text-primary" />
+                        </div>
                         Settings
                         <div className="ml-auto">
                           <ChevronRight />
@@ -229,8 +208,13 @@ export function Navbar() {
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild className="flex">
-                      <Link to="/settings" className="flex items-center my-2">
-                        <MessageCircleQuestionMark className="mr-2 h-6 w-6" />
+                      <Link
+                        to="/settings"
+                        className="flex items-center my-2 hover:text-primary! text-lg!"
+                      >
+                        <div className="mr-2 h-10 w-10 bg-primary-tiny rounded-full flex items-center justify-center">
+                          <MessageCircleQuestionMark className="rounded-full text-primary h-6 w-6" />
+                        </div>
                         Help & Support
                         <div className="ml-auto">
                           <ChevronRight />
@@ -240,9 +224,17 @@ export function Navbar() {
 
                     <DropdownMenuSeparator />
 
-                    <DropdownMenuItem onClick={handleLogout}>
-                      <LogOut className="mr-2 h-4 w-4" />
+                    <DropdownMenuItem
+                      onClick={handleLogout}
+                      className="text-lg! flex items-center my-2 hover:text-primary!"
+                    >
+                      <div className="mr-2 h-10 w-10 bg-primary-tiny rounded-full flex items-center justify-center">
+                        <LogOut className="rounded-full text-primary h-6 w-6" />
+                      </div>
                       Log out
+                      <div className="ml-auto">
+                        <ChevronRight />
+                      </div>
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
@@ -256,9 +248,9 @@ export function Navbar() {
             )}
           </div>
 
-          {/* Mobile Navigation */}
+          {/* Mobile Navigation - Now shows on lg screens and below */}
           <Sheet open={isOpen} onOpenChange={setIsOpen}>
-            <SheetTrigger asChild className="md:hidden">
+            <SheetTrigger asChild className="lg:hidden">
               <Button variant="ghost" size="icon">
                 <Menu className="h-5 w-5" />
               </Button>
@@ -269,7 +261,7 @@ export function Navbar() {
 
               <div className="flex flex-col space-y-4 mt-4 ml-5">
                 {/* Mobile Search */}
-                <div className="flex items-center space-x-2 pb-4 border-b">
+                <div className="flex items-center space-x-2 pb-4 border-b border-border">
                   <Search className="h-4 w-4 text-muted-foreground" />
                   <input
                     type="text"
@@ -296,7 +288,7 @@ export function Navbar() {
                 ))}
 
                 {isAuthenticated && user && (
-                  <div className="border-t pt-4">
+                  <div className="border-t border-border pt-4">
                     <div className="flex items-center space-x-2 mb-4">
                       <Avatar className="h-8 w-8">
                         <AvatarFallback>
@@ -341,7 +333,7 @@ export function Navbar() {
                 )}
 
                 {!isAuthenticated ? (
-                  <div className="border-t pt-4 space-y-2">
+                  <div className="border-t border-border pt-4 space-y-2">
                     <Button variant="ghost" className="w-full" asChild>
                       <Link to="/auth/login" onClick={() => setIsOpen(false)}>
                         Sign In
