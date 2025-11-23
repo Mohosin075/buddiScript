@@ -3,7 +3,7 @@ import { NavLink } from "react-router";
 
 export const Navigation = () => {
   return (
-    <div className="hidden lg:flex items-center space-x-12 mr-10">
+    <>
       {navLinks.map((link, index) => (
         <NavLink
           key={link.href}
@@ -40,7 +40,7 @@ export const Navigation = () => {
           )}
         </NavLink>
       ))}
-    </div>
+    </>
   );
 };
 
