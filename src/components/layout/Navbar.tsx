@@ -127,6 +127,7 @@ export function Navbar() {
             <Search className="h-5 w-5" />
           </Button>
           {/* Desktop Navigation */}
+          {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-12 mr-10">
             {navLinks.map((link) => (
               <NavLink
@@ -134,12 +135,14 @@ export function Navbar() {
                 to={link.href}
                 className={({ isActive }) =>
                   `text-sm font-medium transition-colors hover:text-primary ${
-                    isActive ? "underline underline-offset-4" : ""
+                    isActive
+                      ? "text-primary underline underline-offset-4"
+                      : "text-muted-foreground"
                   }`
                 }
               >
                 <div className="flex items-center space-x-2">
-                  <link.icon className="" />
+                  <link.icon className="w-5 h-5" />
                   {/* <span>{link.label}</span> */}
                 </div>
               </NavLink>
