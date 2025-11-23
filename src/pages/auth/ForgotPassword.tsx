@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useForgotPasswordMutation } from "@/redux/api/authApi";
 import Cookies from "js-cookie";
-import { ArrowLeft, Mail, Wallet } from "lucide-react";
+import { ArrowLeft, Mail } from "lucide-react";
 import type React from "react";
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router";
@@ -57,16 +57,12 @@ export default function ForgotPasswordPage() {
       <HelmetTitle title="Forgot Password" />
       <div className="w-full max-w-md space-y-6">
         {/* Logo/Brand */}
-        <div className="text-center">
-          <div className="mx-auto w-16 h-16 bg-primary rounded-2xl flex items-center justify-center mb-4">
-            <Wallet className="h-8 w-8 text-primary-foreground" />
-          </div>
-          <h1 className="text-2xl font-bold text-foreground">PayWallet</h1>
-          <p className="text-muted-foreground">Reset your password</p>
-        </div>
 
         {/* Reset Form */}
         <Card>
+          <div className="text-center flex items-center justify-center">
+            <img src="/images/logo.svg" alt="logo" className="h-8" />
+          </div>
           <CardHeader className="text-center">
             <CardTitle>
               {isSubmitted ? "Check Your Email" : "Forgot Password?"}
@@ -82,7 +78,9 @@ export default function ForgotPasswordPage() {
               <CardContent>
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div>
-                    <Label htmlFor="email">Email Address</Label>
+                    <Label htmlFor="email" className="pb-3">
+                      Email Address
+                    </Label>
                     <div className="relative">
                       <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                       <Input

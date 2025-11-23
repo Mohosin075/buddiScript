@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
 import { Link, useNavigate } from "react-router";
 
-import { Badge } from "@/components/ui/badge";
+// import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -18,7 +18,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useLoginMutation } from "@/redux/api/authApi";
 import { setCredentials } from "@/redux/slices/authSlice";
-import { Eye, EyeOff, Lock, Mail, Wallet } from "lucide-react";
+import { Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 import HelmetTitle from "@/components/layout/HelmetTitle";
 
@@ -85,19 +85,19 @@ export default function LoginPage() {
     }
   };
 
-  const demoCredentials = [
-    { role: "user", email: "user@gmail.com", password: "demo1234" },
-    { role: "agent", email: "agent@gmail.com", password: "demo1234" },
-    { role: "admin", email: "admin@gmail.com", password: "demo1234" },
-  ];
+  // const demoCredentials = [
+  //   { role: "user", email: "user@gmail.com", password: "demo1234" },
+  //   { role: "agent", email: "agent@gmail.com", password: "demo1234" },
+  //   { role: "admin", email: "admin@gmail.com", password: "demo1234" },
+  // ];
 
-  const fillDemoCredentials = (demoRole: string) => {
-    const creds = demoCredentials.find((c) => c.role === demoRole);
-    if (creds) {
-      setEmail(creds.email);
-      setPassword(creds.password);
-    }
-  };
+  // const fillDemoCredentials = (demoRole: string) => {
+  //   const creds = demoCredentials.find((c) => c.role === demoRole);
+  //   if (creds) {
+  //     setEmail(creds.email);
+  //     setPassword(creds.password);
+  //   }
+  // };
 
   useEffect(() => {
     if (
@@ -111,123 +111,121 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-muted flex items-center justify-center p-4">
       <HelmetTitle title="Login" />
-      <div className="w-full max-w-md space-y-6">
-        {/* Logo/Brand */}
-        <div className="text-center">
-          <div className="mx-auto w-16 h-16 bg-primary rounded-2xl flex items-center justify-center mb-4">
-            <Wallet className="h-8 w-8 text-primary-foreground" />
-          </div>
-          <h1 className="text-2xl font-bold text-foreground">PayWallet</h1>
-          <p className="text-muted-foreground">Financial Dashboard System</p>
+      <div className="w-full max-w-7xl flex flex-col md:flex-row items-center justify-center gap-5 md:gap-0">
+        {/* Left Side - Image */}
+        <div className="md:flex flex-1 max-w-3xl justify-center">
+          <img
+            src="/images/login.png"
+            alt="Login Illustration"
+            className="w-full h-auto max-w-md object-contain"
+          />
         </div>
 
-        {/* Login Form */}
-        <Card>
-          <CardHeader className="text-center">
-            <CardTitle>Welcome Back</CardTitle>
-            <CardDescription>
-              Sign in to your account to continue
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleLogin} className="space-y-4">
-              <div>
-                <Label htmlFor="email">Email Address</Label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+        {/* Right Side - Login Form */}
+        <div className="flex-1 max-w-sm w-full">
+          <Card className="w-full">
+            <CardHeader className="text-center space-y-4">
+              <div className="flex items-center justify-center">
+                <img src="/images/logo.svg" alt="logo" className="h-8" />
+              </div>
+              <CardDescription className="text-lg font-medium text-foreground">
+                Welcome Back
+              </CardDescription>
+              <CardTitle className="text-2xl font-bold">
+                Login to your account
+              </CardTitle>
+              <Button variant="outline" size="lg" className="w-full mt-2 gap-3">
+                <img
+                  src="/images/google.svg"
+                  alt="Google"
+                  className="h-5 w-5"
+                />
+                <span>Sign in with Google</span>
+              </Button>
+            </CardHeader>
+
+            <CardContent>
+              <div className="my-6 flex items-center gap-4">
+                <div className="flex-1 h-px bg-gray-300" />
+                <span className="text-gray-500 text-sm">OR</span>
+                <div className="flex-1 h-px bg-gray-300" />
+              </div>
+              <form onSubmit={handleLogin} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="email" className="text-sm font-medium">
+                    Email Address
+                  </Label>
                   <Input
                     id="email"
                     type="email"
                     placeholder="Enter your email"
-                    className="pl-10"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
+                    className="w-full"
                   />
                 </div>
-              </div>
 
-              <div>
-                <Label htmlFor="password">Password</Label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="password"
-                    type={showPassword ? "text" : "password"}
-                    placeholder="Enter your password"
-                    className="pl-10 pr-10"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                    onClick={() => setShowPassword(!showPassword)}
-                  >
-                    {showPassword ? (
-                      <EyeOff className="h-4 w-4" />
-                    ) : (
-                      <Eye className="h-4 w-4" />
-                    )}
-                  </Button>
+                <div className="space-y-2">
+                  <Label htmlFor="password" className="text-sm font-medium">
+                    Password
+                  </Label>
+                  <div className="relative">
+                    <Input
+                      id="password"
+                      type={showPassword ? "text" : "password"}
+                      placeholder="Enter your password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                      className="w-full pr-10"
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                      onClick={() => setShowPassword(!showPassword)}
+                    >
+                      {showPassword ? (
+                        <EyeOff className="h-4 w-4" />
+                      ) : (
+                        <Eye className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </div>
                 </div>
+
+                <Button
+                  type="submit"
+                  className="w-full"
+                  disabled={isLoading || !email || !password}
+                >
+                  {isLoading ? "Signing In..." : "Sign In"}
+                </Button>
+              </form>
+            </CardContent>
+            <CardFooter className="flex-col space-y-4">
+              <div className="text-center text-sm">
+                <Link
+                  to="/auth/forgot-password"
+                  className="text-primary hover:underline"
+                >
+                  Forgot your password?
+                </Link>
               </div>
-
-              <Button
-                type="submit"
-                className="w-full"
-                disabled={isLoading || !email || !password} // Button disabled if email or password is empty
-              >
-                {isLoading ? "Signing In..." : "Sign In"}
-              </Button>
-            </form>
-          </CardContent>
-          <CardFooter className="flex-col space-y-4">
-            <div className="text-center text-sm">
-              <Link
-                to="/auth/forgot-password"
-                className="text-primary hover:underline"
-              >
-                Forgot your password?
-              </Link>
-            </div>
-            <div className="text-center text-sm text-muted-foreground">
-              Don't have an account?{" "}
-              <Link to="/auth/signup" className="text-primary hover:underline">
-                Sign up
-              </Link>
-            </div>
-          </CardFooter>
-        </Card>
-
-        {/* Demo Credentials */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm">Demo Credentials</CardTitle>
-            <CardDescription className="text-xs">
-              Click to auto-fill login credentials
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {demoCredentials.map((cred) => (
-              <Button
-                key={cred.role}
-                variant="outline"
-                size="sm"
-                className="w-full justify-between bg-transparent"
-                onClick={() => fillDemoCredentials(cred.role)}
-              >
-                <span className="capitalize">{cred.role} Demo</span>
-                <Badge variant="secondary" className="text-xs">
-                  {cred.email}
-                </Badge>
-              </Button>
-            ))}
-          </CardContent>
-        </Card>
+              <div className="text-center text-sm text-muted-foreground">
+                Don't have an account?{" "}
+                <Link
+                  to="/auth/signup"
+                  className="text-primary hover:underline"
+                >
+                  Sign up
+                </Link>
+              </div>
+            </CardFooter>
+          </Card>
+        </div>
       </div>
     </div>
   );
