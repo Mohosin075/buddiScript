@@ -11,7 +11,6 @@ import {
   EyeOff,
   FileText,
   MessageCircle,
-  MoreHorizontal,
   MoreVertical,
   Search,
   Send,
@@ -41,11 +40,11 @@ import {
 
 export default function HomePage() {
   return (
-    <div className="bg-muted fixed top-16 left-0 right-0 bottom-0 ">
-      <div className="min-h-screen  container mx-auto px-4 ">
+    <div className="bg-muted fixed top-16 left-0 right-0 bottom-0">
+      <div className="min-h-screen  container mx-auto px-4">
         <HelmetTitle title="Home" />
 
-        <div className="flex h-screen">
+        <div className="flex h-screen pb-16">
           {/* Left Sidebar - Explore Section */}
           <div className="hidden xl:block w-0 xl:w-80 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
             <div className="mt-6 space-y-5">
@@ -81,6 +80,120 @@ export default function HomePage() {
                             {item.badge}
                           </span>
                         )}
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+              {/* Suggested People Card */}
+              <Card>
+                <CardContent className="p-4">
+                  <div className="flex justify-between mb-4">
+                    <h3 className="font-bold text-lg ">Suggested People</h3>
+                    {/* See All */}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-primary hover:text-primary"
+                    >
+                      See All
+                    </Button>
+                  </div>
+                  <div className="space-y-6">
+                    {[
+                      {
+                        name: "Steve Jobs",
+                        role: "CEO of Apple",
+                        initials: "SJ",
+                      },
+                      {
+                        name: "Ryan Roslansky",
+                        role: "CEO of LinkedIn",
+                        initials: "RR",
+                      },
+                      {
+                        name: "Dylan Field",
+                        role: "CEO of Figma",
+                        initials: "DF",
+                      },
+                    ].map((person, index) => (
+                      <div
+                        key={index}
+                        className="flex items-center justify-between"
+                      >
+                        <div className="flex items-center space-x-3">
+                          <Avatar className="h-10 w-10">
+                            <AvatarImage src="images/img6.png" />
+                            <AvatarFallback>KS</AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <div className="font-semibold">{person.name}</div>
+                            <div className="text-sm text-muted-foreground">
+                              {person.role}
+                            </div>
+                          </div>
+                        </div>
+                        <Button variant="outline" size="sm">
+                          Connect
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Events Card */}
+              <Card className="">
+                <CardContent className="p-4">
+                  <div className="flex justify-between mb-4">
+                    <h3 className="font-bold text-lg ">Events</h3>
+                    {/* See All */}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-primary hover:text-primary"
+                    >
+                      See All
+                    </Button>
+                  </div>
+                  <div className="space-y-3">
+                    {[
+                      {
+                        title: "No more terrorism no more cry",
+                        attendees: "17 People Going",
+                      },
+                      {
+                        title: "No more terrorism no more cry",
+                        attendees: "17 People Going",
+                      },
+                    ].map((event, index) => (
+                      <div
+                        key={index}
+                        className="flex items-start justify-between"
+                      >
+                        <Card className="flex-1 py-0! px-0!">
+                          <CardContent className="px-0">
+                            <img
+                              src="images/feed_event1.png"
+                              className="mb-5"
+                              alt=""
+                            />
+                            <div className="p-4">
+                              <div className="font-semibold mb-1 flex justify-between gap-2">
+                                <p className="bg-primary-green p-2 text-background text-center rounded-lg">
+                                  10 July
+                                </p>
+                                <h3 className="text-lg">{event.title}</h3>
+                              </div>
+                              <div className="text-sm text-muted-foreground flex justify-between items-center mt-5">
+                                {event.attendees}
+                                <Button variant="outline" size="sm">
+                                  Going
+                                </Button>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
                       </div>
                     ))}
                   </div>
