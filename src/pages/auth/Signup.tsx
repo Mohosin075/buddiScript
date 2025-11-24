@@ -12,6 +12,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { BASE_URL } from "@/lib/Base_URL";
 // import { checkEmailProvider } from "@/lib/checkEmailProvider";
 import { useRegisterMutation } from "@/redux/api/authApi";
 import { setCredentials } from "@/redux/slices/authSlice";
@@ -37,6 +38,7 @@ export default function SignupPage() {
 
   const router = useNavigate();
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const [registerUser] = useRegisterMutation();
 
   const handleInputChange = (field: string, value: string) => {
@@ -61,7 +63,7 @@ export default function SignupPage() {
     // }
     setIsLoading(true);
 
-    console.log({formData})
+    console.log({ formData });
 
     try {
       const res = await registerUser({
@@ -77,12 +79,14 @@ export default function SignupPage() {
         Cookies.set("email", res.data.email);
         router(`/auth/otp-verification/?redirect=login`);
         toast.success("Registration successful and OTP sent to your email");
-        dispatch(setCredentials(res.data));
+        dispatch(
+          setCredentials({ user: res.data.user, token: res.data.accessToken })
+        );
 
         setError("");
       }
     } catch (error: any) {
-      console.log({error})
+      console.log({ error });
       toast.error(error?.data?.message || "Registration failed");
     } finally {
       setIsLoading(false);
@@ -97,6 +101,85 @@ export default function SignupPage() {
       router("/");
     }
   }, [router]);
+
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+
+    console.log("URL Params:", urlParams);
+
+    const accessToken = urlParams.get("accessToken");
+    const refreshToken = urlParams.get("refreshToken");
+    const role = urlParams.get("role");
+
+    console.log({ accessToken, refreshToken, role });
+
+    if (accessToken && refreshToken && role) {
+      // persist tokens
+      Cookies.set("token", accessToken);
+      Cookies.set("isAuthenticated", "true");
+
+      localStorage.setItem("token", accessToken);
+      localStorage.setItem("accessToken", accessToken);
+      localStorage.setItem("refreshToken", refreshToken);
+      localStorage.setItem("userRole", role);
+      localStorage.setItem("isAuthenticated", "true");
+
+      // Fetch the user profile from the API using the access token,
+      // then populate redux state the same way `handleLogin` does.
+      (async () => {
+        try {
+          const res = await fetch(`${BASE_URL}/user/profile`, {
+            headers: {
+              authorization: `Bearer ${accessToken}`,
+              "content-type": "application/json",
+            },
+          });
+
+          if (!res.ok) {
+            console.error("Failed to fetch profile", await res.text());
+          } else {
+            const profile = await res.json(); // expected { data: { ...user } }
+
+            // Dispatch credentials to redux in the same shape as handleLogin
+            dispatch(
+              setCredentials({
+                user: profile as any,
+                token: accessToken,
+              })
+            );
+
+            // Normalize and store a lightweight userData object
+            const u = profile?.data || {};
+            const userData = {
+              id: u.id || u._id || "",
+              email: u.email,
+              name: u.name,
+              contact: u.contact,
+              location: u.location,
+              role: u.role || role,
+              token: accessToken,
+            };
+
+            localStorage.setItem("userData", JSON.stringify(userData));
+
+            toast.success("Google Login Successful!");
+          }
+        } catch (err) {
+          console.error("Error fetching profile after Google login", err);
+        } finally {
+          // navigate and clean URL regardless of profile fetch success
+          if (role === "admin") navigate("/dashboard/admin");
+          else navigate("/");
+
+          window.history.replaceState({}, document.title, "/");
+        }
+      })();
+    }
+  }, [navigate, dispatch]);
+
+  const handleGoogleLogin = () => {
+    window.location.href = `${BASE_URL}/auth/google`;
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-muted flex items-center justify-center p-4">
@@ -122,7 +205,12 @@ export default function SignupPage() {
                 Get Started Now
               </CardDescription>
               <CardTitle className="text-2xl font-bold">Registration</CardTitle>
-              <Button variant="outline" size="lg" className="w-full mt-2 gap-3">
+              <Button
+                variant="outline"
+                size="lg"
+                className="w-full mt-2 gap-3"
+                onClick={handleGoogleLogin}
+              >
                 <img
                   src="/images/google.svg"
                   alt="Google"

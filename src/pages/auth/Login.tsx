@@ -23,6 +23,7 @@ import { toast } from "sonner";
 import HelmetTitle from "@/components/layout/HelmetTitle";
 
 import Cookies from "js-cookie";
+import { BASE_URL } from "@/lib/Base_URL";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -95,6 +96,87 @@ export default function LoginPage() {
     }
   };
 
+  const handleGoogleLogin = () => {
+    window.location.href = `${BASE_URL}/auth/google`;
+  };
+
+  // const navigate = useNavigate();
+
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+
+    console.log("URL Params:", urlParams);
+
+    const accessToken = urlParams.get("accessToken");
+    const refreshToken = urlParams.get("refreshToken");
+    const role = urlParams.get("role");
+
+    console.log({ accessToken, refreshToken, role });
+
+    if (accessToken && refreshToken && role) {
+      // persist tokens
+      Cookies.set("token", accessToken);
+      Cookies.set("isAuthenticated", "true");
+
+      localStorage.setItem("token", accessToken);
+      localStorage.setItem("accessToken", accessToken);
+      localStorage.setItem("refreshToken", refreshToken);
+      localStorage.setItem("userRole", role);
+      localStorage.setItem("isAuthenticated", "true");
+
+      // Fetch the user profile from the API using the access token,
+      // then populate redux state the same way `handleLogin` does.
+      (async () => {
+        try {
+          const res = await fetch(`${BASE_URL}/user/profile`, {
+            headers: {
+              authorization: `Bearer ${accessToken}`,
+              "content-type": "application/json",
+            },
+          });
+
+          if (!res.ok) {
+            console.error("Failed to fetch profile", await res.text());
+          } else {
+            const profile = await res.json(); // expected { data: { ...user } }
+
+            // Dispatch credentials to redux in the same shape as handleLogin
+            dispatch(
+              setCredentials({
+                user: profile as any,
+                token: accessToken,
+              })
+            );
+
+            // Normalize and store a lightweight userData object
+            const u = profile?.data || {};
+            const userData = {
+              id: u.id || u._id || "",
+              email: u.email,
+              name: u.name,
+              contact: u.contact,
+              location: u.location,
+              role: u.role || role,
+              token: accessToken,
+            };
+
+            localStorage.setItem("userData", JSON.stringify(userData));
+
+            toast.success("Google Login Successful!");
+          }
+        } catch (err) {
+          console.error("Error fetching profile after Google login", err);
+        } finally {
+          // navigate and clean URL regardless of profile fetch success
+          if (role === "admin") navigate("/dashboard/admin");
+          else navigate("/");
+
+          window.history.replaceState({}, document.title, "/");
+        }
+      })();
+    }
+  }, [navigate, dispatch]);
+
   // const demoCredentials = [
   //   { role: "user", email: "user@gmail.com", password: "demo1234" },
   //   { role: "agent", email: "agent@gmail.com", password: "demo1234" },
@@ -146,7 +228,12 @@ export default function LoginPage() {
               <CardTitle className="text-2xl font-bold">
                 Login to your account
               </CardTitle>
-              <Button variant="outline" size="lg" className="w-full mt-2 gap-3">
+              <Button
+                variant="outline"
+                size="lg"
+                className="w-full mt-2 gap-3"
+                onClick={handleGoogleLogin}
+              >
                 <img
                   src="/images/google.svg"
                   alt="Google"

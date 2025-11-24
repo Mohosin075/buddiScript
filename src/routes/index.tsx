@@ -12,7 +12,6 @@ import AdminRoute from "./AdminRoute";
 import PrivateRoute from "./PrivateRoute";
 import NotFoundPage from "@/pages/NotFoundPage";
 import ProfilePage from "@/pages/dashboard/user/Profile";
-import UserRoute from "./UserRoute";
 import ResetPasswordPage from "@/pages/auth/ResetPassword";
 
 export const router = createBrowserRouter([
@@ -23,14 +22,18 @@ export const router = createBrowserRouter([
     children: [
       {
         index: true,
-        Component: Home,
+        Component: () => (
+          <PrivateRoute>
+            <Home />
+          </PrivateRoute>
+        ),
         path: "/",
       },
       {
         Component: () => (
           <PrivateRoute>
             {/* <UserRoute> */}
-              <ProfilePage />
+            <ProfilePage />
             {/* </UserRoute> */}
           </PrivateRoute>
         ),
