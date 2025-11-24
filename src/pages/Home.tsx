@@ -204,7 +204,7 @@ export default function HomePage() {
 
           {/* Main Content - Feed Section */}
           <div className="flex-1 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-            <div className="max-w-5xl mx-auto p-6">
+            <div className="max-w-5xl mx-auto md:p-6">
               {/* Your Story Header */}
               {/* Story Section */}
               <div className="bg-white rounded-lg border border-gray-200 p-4 mb-6">
@@ -319,7 +319,10 @@ export default function HomePage() {
                       >
                         <div className="flex items-center justify-center text-center">
                           {" "}
-                          <span className="mr-2">{item.icon}</span> {item.label}
+                          <span className="mr-2">{item.icon}</span>{" "}
+                          <span className={`hidden md:block`}>
+                            {item.label}
+                          </span>
                         </div>
                       </div>
                     ))}
@@ -386,34 +389,68 @@ export default function HomePage() {
                     </div>
 
                     {/* Post content */}
-                    <div className="mb-4">
+                    <div className="mb-7">
                       <h3 className="font-semibold mb-2 text-lg">
                         Healthy Tracking App
                       </h3>
+                      <img src="/images/timeline_img.png" alt="" />
                     </div>
-
+                    <div className="flex items-center justify-between  mb-4">
+                      <div className="*:data-[slot=avatar]:ring-background flex -space-x-2 *:data-[slot=avatar]:ring-2 *:data-[slot=avatar]">
+                        <Avatar>
+                          <AvatarImage
+                            src="https://github.com/shadcn.png"
+                            alt="@shadcn"
+                          />
+                          <AvatarFallback>CN</AvatarFallback>
+                        </Avatar>
+                        <Avatar>
+                          <AvatarImage
+                            src="https://github.com/maxleiter.png"
+                            alt="@maxleiter"
+                          />
+                          <AvatarFallback>LR</AvatarFallback>
+                        </Avatar>
+                        <Avatar>
+                          <AvatarImage
+                            src="https://github.com/evilrabbit.png"
+                            alt="@evilrabbit"
+                          />
+                          <AvatarFallback>ER</AvatarFallback>
+                        </Avatar>
+                        <Avatar className="">
+                          <div className="flex justify-center items-center bg-primary text-background">
+                            <p>10+</p>
+                          </div>
+                        </Avatar>
+                      </div>
+                      <div className="flex items-center gap-5">
+                        <div>12 comments</div>
+                        <div>320 share</div>
+                      </div>
+                    </div>
                     {/* Action buttons - Like, Comment, Share */}
-                    <div className="flex justify-between border-t border-b border-border py-2 mb-4">
+                    <div className="flex justify-between py-2 mb-4 bg-background">
                       <Button
                         variant="ghost"
-                        size="sm"
-                        className="flex-1 text-muted-foreground hover:text-primary"
+                        size="lg"
+                        className="flex-1 text-muted-foreground hover:text-primary rounded-none"
                       >
                         <ThumbsUp className="h-4 w-4 mr-2" />
                         Like
                       </Button>
                       <Button
                         variant="ghost"
-                        size="sm"
-                        className="flex-1 text-muted-foreground hover:text-primary"
+                        size="lg"
+                        className="flex-1 text-muted-foreground hover:text-primary rounded-none"
                       >
                         <MessageCircle className="h-4 w-4 mr-2" />
                         Comment
                       </Button>
                       <Button
                         variant="ghost"
-                        size="sm"
-                        className="flex-1 text-muted-foreground hover:text-primary"
+                        size="lg"
+                        className="flex-1 text-muted-foreground hover:text-primary rounded-none"
                       >
                         <Share2 className="h-4 w-4 mr-2" />
                         Share
@@ -423,12 +460,22 @@ export default function HomePage() {
                     {/* Comments section */}
                     <div className="space-y-4">
                       {/* Write comment input */}
-                      <div className="flex items-center space-x-3">
-                        <Avatar className="h-8 w-8">
-                          <AvatarFallback>Y</AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1 bg-input rounded-full px-4 py-2 text-sm cursor-pointer hover:bg-muted/80 text-muted-foreground">
-                          Write a comment...
+                      <div className="space-y-3">
+                        <div className="flex items-center space-x-3">
+                          <div className="flex-1 relative">
+                            <Avatar className="h-8 w-8 absolute left-3 top-1/2 transform -translate-y-1/2">
+                              <AvatarImage src="images/mini_pic.png" />
+                              <AvatarFallback>KS</AvatarFallback>
+                            </Avatar>
+                            <input
+                              type="text"
+                              placeholder="Write a comment..."
+                              className="w-full bg-input rounded-full px-4 py-2 pr-12  text-foreground placeholder:text-muted-foreground border-none outline-none focus:ring-2 focus:ring-primary focus:bg-white transition-colors duration-200 text-lg ps-14"
+                            />
+                            <button className="absolute right-3 top-1/2 transform -translate-y-1/2 text-primary hover:text-primary/80 transition-colors cursor-pointer p-2">
+                              <Send className="h-6 w-6" />
+                            </button>
+                          </div>
                         </div>
                       </div>
 
@@ -439,8 +486,9 @@ export default function HomePage() {
 
                       {/* Existing comment */}
                       <div className="flex space-x-3">
-                        <Avatar className="h-8 w-8">
-                          <AvatarFallback>RS</AvatarFallback>
+                        <Avatar className="h-10 w-10">
+                          <AvatarImage src="images/img11.png" />
+                          <AvatarFallback>KS</AvatarFallback>
                         </Avatar>
                         <div className="flex-1">
                           <div className="bg-muted/50 rounded-lg p-3">
