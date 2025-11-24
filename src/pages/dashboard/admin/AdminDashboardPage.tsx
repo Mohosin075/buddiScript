@@ -6,7 +6,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { useGetAllTransactionsQuery } from "@/redux/api/transactionApi";
 import { useGetAgentsQuery, useGetUsersQuery } from "@/redux/api/userApi";
 import {
   Activity,
@@ -102,13 +101,7 @@ export default function AdminDashboardPage() {
     }
   }, [navigate]);
 
-  const { data: transactionsData } = useGetAllTransactionsQuery({});
 
-  const transactions = Array.isArray(transactionsData?.data)
-    ? transactionsData.data
-    : [];
-
-  console.log(transactions);
 
   const getSeverityColor = (severity: string) => {
     switch (severity) {
