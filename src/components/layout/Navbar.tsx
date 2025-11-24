@@ -36,6 +36,8 @@ export function Navbar() {
   const { data } = useGetProfileQuery();
   const user = data?.data;
 
+  console.log({ data });
+
   const isAuthenticated =
     Cookie.get("isAuthenticated") || localStorage.getItem("isAuthenticated");
 

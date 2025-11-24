@@ -46,7 +46,7 @@ export default function OtpPage() {
       setIsLoading(true);
       const result = await verifyOtp({
         email: userEmail as string,
-        oneTimeCode: otp
+        oneTimeCode: otp,
       }).unwrap();
 
       localStorage.setItem("token", result.data.token);

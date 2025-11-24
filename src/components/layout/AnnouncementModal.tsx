@@ -14,6 +14,8 @@ const AnnouncementModal = () => {
       const response = await fetch(`${BASE_URL}/status`);
       const data = await response.json();
 
+      console.log({ data });
+
       if (data.success) {
         setIsOpen(false); // Server is live, close the modal immediately
       } else {

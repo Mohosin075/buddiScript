@@ -15,10 +15,10 @@ export const getAuthToken = (state: RootState) => {
   const fromState = (state as any)?.auth?.token as string | undefined;
   if (fromState) return fromState;
 
-  const fromCookie = Cookies.get("token");
+  const fromCookie = Cookies.get("authToken");
   if (fromCookie) return fromCookie;
 
-  const fromLS = getFromLocalStorage("token");
+  const fromLS = getFromLocalStorage("authToken");
   if (fromLS) return fromLS;
 
   return undefined;

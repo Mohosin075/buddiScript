@@ -35,7 +35,7 @@ const getAuthToken = (state: RootState) => {
 export const authApi = createApi({
   reducerPath: "authApi",
   baseQuery: fetchBaseQuery({
-    baseUrl: `${BASE_URL}/api/v1/auth`,
+    baseUrl: `${BASE_URL}/auth`,
     // credentials: "include", // uncomment if you also want cookies automatically sent
     prepareHeaders: (headers, { getState }) => {
       const state = getState() as RootState;

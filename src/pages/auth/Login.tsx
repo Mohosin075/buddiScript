@@ -36,7 +36,7 @@ export default function LoginPage() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    console.log({email, password})
+    console.log({ email, password });
 
     // Proceed only if both email and password are filled
     if (!email || !password) return; // Return early if validation fails
@@ -44,11 +44,14 @@ export default function LoginPage() {
     try {
       const result = await login({ email, password }).unwrap();
 
-      console.log({result})
+      console.log({ result });
 
       // Dispatch credentials to Redux store
       dispatch(
-        setCredentials({ user: result.data.user, token: result.data.token })
+        setCredentials({
+          user: result.data.user,
+          token: result.data.accessToken,
+        })
       );
 
       const userData = {
@@ -58,13 +61,13 @@ export default function LoginPage() {
         contact: result?.data.contact,
         location: result?.data.location,
         role: result?.data.role,
-        token: result?.data.token,
+        token: result?.data.accessToken,
       };
       // Store in localStorage for persistence
       Cookies.set("token", userData.token);
       Cookies.set("isAuthenticated", "true");
 
-      localStorage.setItem("token", result?.data.token);
+      localStorage.setItem("token", result?.data.accessToken);
       localStorage.setItem("userRole", result?.data.role);
       localStorage.setItem("userData", JSON.stringify(userData));
       localStorage.setItem("isAuthenticated", "true");

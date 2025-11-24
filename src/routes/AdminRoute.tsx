@@ -3,15 +3,14 @@ import type { ReactNode } from "react";
 import { Navigate } from "react-router";
 
 const AdminRoute = ({ children }: { children: ReactNode }) => {
-  const isUser = localStorage.getItem("userRole");
+  const role = localStorage.getItem("userRole");
 
-  if (isUser === "ADMIN") {
+  if (role && role.toLowerCase() === "admin") {
     return children;
-  } else {
-    // Redirect to login page if not authenticated
-
-    return <Navigate to="/" replace />;
   }
+
+  // Redirect to home if not authorized
+  return <Navigate to="/" replace />;
 };
 
 export default AdminRoute;
