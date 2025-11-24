@@ -47,22 +47,26 @@ export default function OtpPage() {
       setIsLoading(true);
       const result = await verifyOtp({
         email: userEmail as string,
-        oneTimeCode: parseInt(otp) as number,
+        oneTimeCode: otp,
       }).unwrap();
 
       if (result.success) {
         toast.success("OTP verified successfully!");
-        // Navigate to the next step after successful OTP verification
         if (redirect === "login") {
-          navigate("/auth/login"); // Adjust accordingly
+          navigate("/auth/login");
         } else if (redirect === "reset-password") {
-          navigate("/auth/change-password"); // Adjust accordingly
+          // Pass email to change password page
+          navigate(
+            `/auth/reset-password?email=${encodeURIComponent(
+              userEmail as string
+            )}`
+          );
         }
-        Cookies.remove("email");
       } else {
         toast.error("Invalid OTP, please try again.");
       }
     } catch (error) {
+      console.log({ error });
       toast.error("An error occurred during OTP verification.");
       console.error("OTP verification failed:", error);
     } finally {
@@ -84,12 +88,8 @@ export default function OtpPage() {
       <HelmetTitle title="OTP Verification" />
       <div className="w-full max-w-md space-y-6">
         {/* Logo/Brand */}
-        <div className="text-center">
-          <div className="mx-auto w-16 h-16 bg-primary rounded-2xl flex items-center justify-center mb-4">
-            <Key className="h-8 w-8 text-primary-foreground" />
-          </div>
-          <h1 className="text-2xl font-bold text-foreground">PayWallet</h1>
-          <p className="text-muted-foreground">Financial Dashboard System</p>
+        <div className="flex items-center justify-center">
+          <img src="/images/logo.svg" alt="logo" className="h-8" />
         </div>
 
         {/* OTP Form */}
@@ -103,7 +103,9 @@ export default function OtpPage() {
           <CardContent>
             <form onSubmit={handleOtpSubmit} className="space-y-4">
               <div>
-                <Label htmlFor="otp">One-Time Password (OTP)</Label>
+                <Label htmlFor="otp" className="mb-3">
+                  One-Time Password (OTP)
+                </Label>
                 <div className="relative">
                   <Key className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                   <Input

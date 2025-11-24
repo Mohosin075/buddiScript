@@ -1,4 +1,3 @@
-
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import { BASE_URL } from "@/lib/Base_URL";
 import type {
@@ -36,7 +35,7 @@ const getAuthToken = (state: RootState) => {
 export const authApi = createApi({
   reducerPath: "authApi",
   baseQuery: fetchBaseQuery({
-    baseUrl: `${BASE_URL}/auth`,
+    baseUrl: `${BASE_URL}/api/v1/auth`,
     // credentials: "include", // uncomment if you also want cookies automatically sent
     prepareHeaders: (headers, { getState }) => {
       const state = getState() as RootState;
@@ -60,7 +59,7 @@ export const authApi = createApi({
   endpoints: (builder) => ({
     register: builder.mutation<AuthResponse, RegisterRequest>({
       query: (userData) => ({
-        url: "/register",
+        url: "/signup",
         method: "POST",
         body: userData,
       }),
@@ -74,7 +73,7 @@ export const authApi = createApi({
     }),
     resetPassword: builder.mutation<
       { message: string },
-      { email: string; password: string }
+      { email: string; newPassword: string; confirmPassword: string }
     >({
       query: (data) => ({
         url: "/reset-password",
@@ -92,10 +91,10 @@ export const authApi = createApi({
     }),
     verifyOtp: builder.mutation<
       { message: string; success: boolean },
-      { email: string; oneTimeCode: number }
+      { email: string; oneTimeCode: string }
     >({
       query: (data) => ({
-        url: "/verify-email",
+        url: "/verify-account",
         method: "POST",
         body: data,
       }),

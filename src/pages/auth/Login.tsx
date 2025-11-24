@@ -36,11 +36,15 @@ export default function LoginPage() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    console.log({email, password})
+
     // Proceed only if both email and password are filled
     if (!email || !password) return; // Return early if validation fails
 
     try {
       const result = await login({ email, password }).unwrap();
+
+      console.log({result})
 
       // Dispatch credentials to Redux store
       dispatch(

@@ -33,6 +33,8 @@ export default function ForgotPasswordPage() {
     }).unwrap();
     console.log(result);
 
+    
+
     toast.info("Password reset link sent successfully!");
     // }
 

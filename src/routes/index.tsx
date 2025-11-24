@@ -13,6 +13,7 @@ import PrivateRoute from "./PrivateRoute";
 import NotFoundPage from "@/pages/NotFoundPage";
 import ProfilePage from "@/pages/dashboard/user/Profile";
 import UserRoute from "./UserRoute";
+import ResetPasswordPage from "@/pages/auth/ResetPassword";
 
 export const router = createBrowserRouter([
   {
@@ -75,6 +76,10 @@ export const router = createBrowserRouter([
   {
     Component: ForgotPasswordPage,
     path: "auth/forgot-password",
+  },
+  {
+    Component: ResetPasswordPage,
+    path: "auth/reset-password",
   },
   {
     Component: OtpPage,

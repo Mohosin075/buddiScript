@@ -61,11 +61,13 @@ export default function SignupPage() {
     }
     setIsLoading(true);
 
+    console.log({formData})
+
     try {
       const res = await registerUser({
         email: formData.email,
         password: formData.password,
-        role: "USER", // Default role
+        role: "user", // Default role
         name: "",
         contact: "",
         location: "",
@@ -80,6 +82,7 @@ export default function SignupPage() {
         setError("");
       }
     } catch (error: any) {
+      console.log({error})
       toast.error(error?.data?.message || "Registration failed");
     } finally {
       setIsLoading(false);
