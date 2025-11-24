@@ -36,7 +36,7 @@ export function Navbar() {
   const { data } = useGetProfileQuery();
   const user = data?.data;
 
-  console.log({ data });
+  console.log({ user });
 
   const isAuthenticated =
     Cookie.get("isAuthenticated") || localStorage.getItem("isAuthenticated");
@@ -146,7 +146,7 @@ export function Navbar() {
                   <Avatar className="h-8 w-8 ring-2! ring-primary-tiny">
                     <AvatarImage
                       src={
-                        user?.image ||
+                        user?.profile ||
                         "https://cdn1.iconfinder.com/data/icons/user-pictures/100/male3-512.png"
                       }
                       alt={user?.name}
@@ -184,7 +184,7 @@ export function Navbar() {
                           <Avatar className="h-14 w-14 ring-2">
                             <AvatarImage
                               src={
-                                user?.image ||
+                                user?.profile ||
                                 "https://cdn1.iconfinder.com/data/icons/user-pictures/100/male3-512.png"
                               }
                               alt={user?.name}

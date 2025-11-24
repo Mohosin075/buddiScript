@@ -118,7 +118,7 @@ export default function ProfilePage() {
                 <div className="mt-4">
                   <h3 className="text-lg font-semibold">{user?.name}</h3>
                   <p className="text-sm text-muted-foreground">{user?.email}</p>
-                  <Badge variant="secondary" className="mt-2">
+                  <Badge variant="secondary" className="mt-2 bg-primary text-background">
                     {user?.verified ? "Verified User" : "Unverified User"}
                   </Badge>
                 </div>
