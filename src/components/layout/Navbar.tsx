@@ -41,6 +41,8 @@ export function Navbar() {
   const isAuthenticated =
     Cookie.get("isAuthenticated") || localStorage.getItem("isAuthenticated");
 
+  const userRole = Cookie.get("userRole") || localStorage.getItem("userRole");
+
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
@@ -124,6 +126,17 @@ export function Navbar() {
             {/* Desktop Navigation */}
             <div className="hidden lg:flex items-center space-x-12 mr-10">
               <Navigation />
+              {userRole === "admin" && (
+                <Link to="/dashboard/admin">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="bg-transparent"
+                  >
+                    Admin Dashboard
+                  </Button>
+                </Link>
+              )}
             </div>
 
             {/* Desktop Auth Section */}

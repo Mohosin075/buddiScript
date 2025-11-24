@@ -29,9 +29,9 @@ export const router = createBrowserRouter([
       {
         Component: () => (
           <PrivateRoute>
-            <UserRoute>
+            {/* <UserRoute> */}
               <ProfilePage />
-            </UserRoute>
+            {/* </UserRoute> */}
           </PrivateRoute>
         ),
         path: "/profile",

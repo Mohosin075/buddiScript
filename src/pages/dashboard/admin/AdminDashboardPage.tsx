@@ -94,14 +94,12 @@ export default function AdminDashboardPage() {
   const userInfo = localStorage.getItem("userData");
   const user = JSON.parse(userInfo as string);
   useEffect(() => {
-    if (localStorage.getItem("userRole") !== "ADMIN") {
+    if (localStorage.getItem("userRole") !== "admin") {
       navigate("/");
     } else if (localStorage.getItem("isAuthenticated") !== "true") {
       navigate("/auth/login");
     }
   }, [navigate]);
-
-
 
   const getSeverityColor = (severity: string) => {
     switch (severity) {
@@ -201,7 +199,7 @@ export default function AdminDashboardPage() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
-                Total Agents
+                Total Posts
               </CardTitle>
               <div className="text-muted-foreground">
                 <UserCheck2 className="h-4 w-4" />
@@ -224,7 +222,7 @@ export default function AdminDashboardPage() {
                   variant="secondary"
                   className={` text-green-500 text-xs`}
                 >
-                  Active agents
+                  Active Posts
                 </Badge>
               </div>
             </CardContent>
@@ -377,7 +375,7 @@ export default function AdminDashboardPage() {
         </Card>
 
         {/* Quick Actions */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-2">
           <Link to={"/dashboard/admin/users"}>
             <Card className="cursor-pointer hover:shadow-md transition-shadow">
               <CardContent className="p-6 text-center">
@@ -392,43 +390,15 @@ export default function AdminDashboardPage() {
             </Card>
           </Link>
 
-          <Link to={"/dashboard/admin/agents"}>
+          <Link to={"/dashboard/admin/posts"}>
             <Card className="cursor-pointer hover:shadow-md transition-shadow">
               <CardContent className="p-6 text-center">
                 <div className="mx-auto w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mb-4">
                   <UserCheck className="h-6 w-6 text-green-600" />
                 </div>
-                <h3 className="font-semibold">Manage Agents</h3>
+                <h3 className="font-semibold">Manage Posts</h3>
                 <p className="text-sm text-muted-foreground">
-                  Approve and manage agents
-                </p>
-              </CardContent>
-            </Card>
-          </Link>
-
-          <Link to={"/dashboard/admin/transactions"}>
-            <Card className="cursor-pointer hover:shadow-md transition-shadow">
-              <CardContent className="p-6 text-center">
-                <div className="mx-auto w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mb-4">
-                  <Activity className="h-6 w-6 text-purple-600" />
-                </div>
-                <h3 className="font-semibold">Transactions</h3>
-                <p className="text-sm text-muted-foreground">
-                  Monitor all transactions
-                </p>
-              </CardContent>
-            </Card>
-          </Link>
-
-          <Link to={"/dashboard/admin/settings"}>
-            <Card className="cursor-pointer hover:shadow-md transition-shadow sr-only">
-              <CardContent className="p-6 text-center">
-                <div className="mx-auto w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center mb-4">
-                  <Settings className="h-6 w-6 text-orange-600" />
-                </div>
-                <h3 className="font-semibold">System Settings</h3>
-                <p className="text-sm text-muted-foreground">
-                  Configure system parameters
+                  View and manage posts
                 </p>
               </CardContent>
             </Card>

@@ -63,6 +63,9 @@ export default function LoginPage() {
         role: result?.data.role,
         token: result?.data.accessToken,
       };
+
+      console.log("User Data:", userData);
+
       // Store in localStorage for persistence
       Cookies.set("token", userData.token);
       Cookies.set("isAuthenticated", "true");

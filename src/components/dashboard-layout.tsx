@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -23,7 +22,6 @@ import {
   Search,
   User,
   Users,
-  Wallet,
 } from "lucide-react";
 import type React from "react";
 import { useEffect, useState } from "react";
@@ -50,15 +48,6 @@ const navigationItems = {
   ],
 };
 
-const roleColors = {
-  user: "bg-blue-500",
-  admin: "bg-purple-500",
-};
-
-const roleLabels = {
-  user: "user",
-  admin: "admin",
-};
 
 export function DashboardLayout({
   children,
@@ -102,23 +91,16 @@ export function DashboardLayout({
   };
 
   const Sidebar = ({ className = "" }: { className?: string }) => (
-    <div className={`flex h-full flex-col bg-sidebar ${className}`}>
+    <div className={`flex h-full flex-col ${className}`}>
       <Link to={"/"}>
         <div className="flex h-14 items-center border-b border-sidebar-border px-4">
           <div className="flex items-center gap-2">
-            <div
-              className={`h-8 w-8 rounded-lg ${roleColors[userRole]} flex items-center justify-center`}
-            >
-              <Wallet className="h-4 w-4 text-white" />
-            </div>
-            <div className="flex flex-col">
-              <span className="text-sm font-semibold text-sidebar-foreground">
-                PayWallet
-              </span>
-              <Badge variant="secondary" className="text-xs w-fit">
-                {roleLabels[userRole]}
-              </Badge>
-            </div>
+            <div className={`  flex items-center justify-center`}></div>
+            <Link to="/" className="flex items-center space-x-2">
+              <div className="flex items-center space-x-2">
+                <img src="/images/logo.svg" alt="logo" />
+              </div>
+            </Link>
           </div>
         </div>
       </Link>

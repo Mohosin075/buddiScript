@@ -69,8 +69,13 @@ export default function ProfilePage() {
           confirmPassword: "",
         });
       })
-      .catch(() => {
-        toast.error("Failed to change password");
+      .catch((error) => {
+        if (error?.data?.message) {
+          toast.error(error.data.message);
+          return;
+        } else {
+          toast.error("Failed to change password");
+        }
       });
   };
 
