@@ -12,15 +12,35 @@ const getFromLocalStorage = (key: string) => {
 };
 
 export const getAuthToken = (state: RootState) => {
+  // Priority 1: Get from Redux state
   const fromState = (state as any)?.auth?.token as string | undefined;
-  if (fromState) return fromState;
+  if (fromState) {
+    console.log("[getAuthToken] Token from Redux state:", fromState.slice(0, 20) + "...");
+    return fromState;
+  }
 
-  const fromCookie = Cookies.get("authToken");
-  if (fromCookie) return fromCookie;
+  // Priority 2: Get from cookies
+  const fromCookie = Cookies.get("token") || Cookies.get("authToken");
+  if (fromCookie) {
+    console.log("[getAuthToken] Token from cookies:", fromCookie.slice(0, 20) + "...");
+    return fromCookie;
+  }
 
-  const fromLS = getFromLocalStorage("authToken");
-  if (fromLS) return fromLS;
+  // Priority 3: Get from localStorage (token key used by login flow)
+  const fromLS = getFromLocalStorage("token");
+  if (fromLS) {
+    console.log("[getAuthToken] Token from localStorage (token):", fromLS.slice(0, 20) + "...");
+    return fromLS;
+  }
 
+  // Priority 4: Fallback to authToken key
+  const fromAuthTokenLS = getFromLocalStorage("authToken");
+  if (fromAuthTokenLS) {
+    console.log("[getAuthToken] Token from localStorage (authToken):", fromAuthTokenLS.slice(0, 20) + "...");
+    return fromAuthTokenLS;
+  }
+
+  console.log("[getAuthToken] No token found!");
   return undefined;
 };
 

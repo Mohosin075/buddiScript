@@ -16,6 +16,7 @@ export interface User {
     image: string;
     verified: boolean;
     length: number;
+    profile?: string;
   };
 }
 
@@ -24,6 +25,7 @@ interface AuthState {
   token: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  hydrationComplete: boolean;
 }
 
 const initialState: AuthState = {
@@ -31,6 +33,7 @@ const initialState: AuthState = {
   token: null,
   isAuthenticated: false,
   isLoading: false,
+  hydrationComplete: false,
 };
 
 const authSlice = createSlice({
@@ -45,6 +48,7 @@ const authSlice = createSlice({
       state.token = action.payload.token;
       state.isAuthenticated = true;
       state.isLoading = false;
+      state.hydrationComplete = true;
     },
     logout: (state) => {
       state.user = null;
@@ -60,9 +64,12 @@ const authSlice = createSlice({
         state.user = { ...state.user, ...action.payload };
       }
     },
+    completeHydration: (state) => {
+      state.hydrationComplete = true;
+    },
   },
 });
 
-export const { setCredentials, logout, setLoading, updateUser } =
+export const { setCredentials, logout, setLoading, updateUser, completeHydration } =
   authSlice.actions;
 export default authSlice.reducer;

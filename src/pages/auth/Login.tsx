@@ -76,11 +76,11 @@ export default function LoginPage() {
       switch (result.data.role) {
         case "user":
           navigate("/");
-          toast.success(`Welcome Back! ${result.data.name}`);
+          toast.success(`Welcome Back! ${result.data?.name}`);
           break;
         case "admin":
           navigate("/dashboard/admin");
-          toast.success(`Welcome Back! ${result.data.name}`);
+          toast.success(`Welcome Back! ${result.data?.name}`);
           break;
         default:
           navigate("/");
@@ -107,10 +107,12 @@ export default function LoginPage() {
   // };
 
   useEffect(() => {
+    console.log("Checking authentication status...");
     if (
       localStorage.getItem("isAuthenticated") === "true" ||
       Cookies.get("isAuthenticated") === "true"
     ) {
+      console.log("User is already authenticated, redirecting...");
       navigate("/");
     }
   }, [navigate]);

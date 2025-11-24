@@ -2,45 +2,54 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { useEffect } from "react";
 import { useAppDispatch } from "./hooks";
-import { setCredentials } from "./slices/authSlice";
+import { setCredentials, completeHydration } from "./slices/authSlice";
 
 export function useAuthPersistence() {
   const dispatch = useAppDispatch();
 
   useEffect(() => {
+    console.log("[useAuthPersistence] Starting auth hydration...");
+    
     // Check for stored auth data on app load
     const storedAuth = localStorage.getItem("buddiAuth");
     if (storedAuth) {
       try {
         const authData = JSON.parse(storedAuth);
         if (authData.token && authData.user) {
+          console.log("[useAuthPersistence] Restoring from buddiAuth:", authData.token.slice(0, 20) + "...");
           dispatch(setCredentials(authData));
+          return;
         }
       } catch (error) {
-        // Clear invalid stored data
+        console.error("[useAuthPersistence] Error parsing buddiAuth:", error);
         localStorage.removeItem("buddiAuth");
       }
     }
-    else {
-      // Fallback: some parts of the app store token and userData separately
-      const token = localStorage.getItem("token");
-      const userDataStr = localStorage.getItem("userData");
 
-      if (token && userDataStr) {
-        try {
-          const user = JSON.parse(userDataStr);
-          dispatch(
-            setCredentials({
-              user: { data: user } as any,
-              token,
-            })
-          );
-        } catch (err) {
-          // If parsing fails, clear the invalid item
-          localStorage.removeItem("userData");
-        }
+    // Fallback: some parts of the app store token and userData separately
+    const token = localStorage.getItem("token");
+    const userDataStr = localStorage.getItem("userData");
+
+    if (token && userDataStr) {
+      try {
+        console.log("[useAuthPersistence] Restoring from token + userData:", token.slice(0, 20) + "...");
+        const user = JSON.parse(userDataStr);
+        dispatch(
+          setCredentials({
+            user: { data: user } as any,
+            token,
+          })
+        );
+        return;
+      } catch (err) {
+        console.error("[useAuthPersistence] Error parsing userData:", err);
+        localStorage.removeItem("userData");
       }
     }
+
+    // No auth found, mark hydration as complete
+    console.log("[useAuthPersistence] No stored auth found, completing hydration");
+    dispatch(completeHydration());
   }, [dispatch]);
 }
 

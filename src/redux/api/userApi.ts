@@ -10,11 +10,15 @@ export const userApi = createApi({
     baseUrl: `${BASE_URL}/user`,
     // credentials: "include", // enable if you also want cookies sent automatically
     prepareHeaders: (headers, { getState }) => {
-      const token = getAuthToken(getState() as RootState);
+      const state = getState() as RootState;
+      const token = getAuthToken(state);
       const bearer = asBearer(token);
 
-      if (bearer) headers.set("authorization", bearer);
-      else headers.delete("authorization");
+      if (bearer) {
+        headers.set("authorization", bearer);
+      } else {
+        headers.delete("authorization");
+      }
 
       return headers;
     },

@@ -12,6 +12,7 @@ import { useGetProfileQuery } from "@/redux/api/userApi";
 import { format } from "date-fns";
 import { useChangePasswordMutation } from "@/redux/api/authApi";
 import { toast } from "sonner";
+import { useAppSelector } from "@/redux/hooks";
 import ProfileOverviewSkeletons from "./skeletons/ProfileOverviewSkeletons";
 import ProfileSettingsSkeletons, {
   SettingsSkeletons,
@@ -20,7 +21,11 @@ import ProfileSettingsSkeletons, {
 export default function ProfilePage() {
   const [isEditing, setIsEditing] = useState(false);
 
-  const { data, isLoading: userDataIsLoading } = useGetProfileQuery();
+  // Skip query until hydration is complete and token is available
+  const { hydrationComplete, token } = useAppSelector((state) => state.auth);
+  const { data, isLoading: userDataIsLoading } = useGetProfileQuery(undefined, {
+    skip: !hydrationComplete && !token,
+  });
   const [formData, setFormData] = useState({
     currentPassword: "",
     newPassword: "",
@@ -29,6 +34,8 @@ export default function ProfilePage() {
 
   // Get user data from the API
   const user = data?.data;
+
+  console.log({ user });
 
   const [changePassword, { isLoading }] = useChangePasswordMutation();
 
@@ -90,7 +97,7 @@ export default function ProfilePage() {
               <div className="flex flex-col items-center text-center">
                 <div className="relative">
                   <Avatar className="h-24 w-24">
-                    <AvatarImage src={user?.image} alt="Profile" />
+                    <AvatarImage src={user?.profile} alt="Profile" />
                     <AvatarFallback className="text-lg">
                       {user?.name}
                     </AvatarFallback>

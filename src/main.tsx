@@ -7,12 +7,15 @@ import { Provider } from "react-redux";
 import { store } from "./redux/store.ts";
 import { Toaster } from "./components/ui/sonner.tsx";
 import { HelmetProvider } from "react-helmet-async";
+import { AuthProvider } from "./components/AuthProvider";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <HelmetProvider>
       <Provider store={store}>
-        <RouterProvider router={router} />
+        <AuthProvider>
+          <RouterProvider router={router} />
+        </AuthProvider>
         <Toaster richColors />
       </Provider>
     </HelmetProvider>
