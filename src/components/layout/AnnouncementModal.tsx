@@ -84,7 +84,7 @@ const AnnouncementModal = () => {
             {/* Modal Content */}
             <div className="text-center">
               <h2 className="text-2xl max-w-xs mx-auto font-semibold text-black">
-                Please Be Patient Server is Loading...
+                Server is Loading..
               </h2>
               <p className="mt-2 text-gray-700">
                 Our backend server is hosted on a free hosting service.

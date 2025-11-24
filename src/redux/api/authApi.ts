@@ -73,7 +73,7 @@ export const authApi = createApi({
     }),
     resetPassword: builder.mutation<
       { message: string },
-      { email: string; newPassword: string; confirmPassword: string }
+      { email: string; newPassword: string; confirmPassword: string , token?: string }
     >({
       query: (data) => ({
         url: "/reset-password",
@@ -90,7 +90,7 @@ export const authApi = createApi({
       }),
     }),
     verifyOtp: builder.mutation<
-      { message: string; success: boolean },
+      { message: string; success: boolean , data: { token: string } },
       { email: string; oneTimeCode: string }
     >({
       query: (data) => ({

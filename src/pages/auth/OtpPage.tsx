@@ -42,13 +42,14 @@ export default function OtpPage() {
       toast.error("Please enter the OTP.");
       return;
     }
-
     try {
       setIsLoading(true);
       const result = await verifyOtp({
         email: userEmail as string,
-        oneTimeCode: otp,
+        oneTimeCode: otp
       }).unwrap();
+
+      localStorage.setItem("token", result.data.token);
 
       if (result.success) {
         toast.success("OTP verified successfully!");
@@ -130,14 +131,14 @@ export default function OtpPage() {
             </form>
           </CardContent>
           <CardFooter className="flex-col space-y-4">
-            <div className="text-center text-sm">
+            {/* <div className="text-center text-sm">
               <Link
                 to="/auth/resend-otp"
                 className="text-primary hover:underline"
               >
                 Resend OTP
               </Link>
-            </div>
+            </div> */}
             <div className="text-center text-sm text-muted-foreground">
               Having trouble?{" "}
               <Link to="/auth/support" className="text-primary hover:underline">

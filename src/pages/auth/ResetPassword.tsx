@@ -61,12 +61,15 @@ export default function ResetPasswordPage() {
 
     setIsLoading(true);
 
+    const token = localStorage.getItem("token") || undefined;
+
     try {
       // Call reset password API with the correct structure that backend expects
       const result = await resetPassword({
         email: userEmail,
         newPassword: formData.newPassword, // Changed from 'password' to 'newPassword'
         confirmPassword: formData.confirmPassword, // Add confirmPassword
+        token: token, // Include token if needed
       }).unwrap();
 
       console.log({ result });
@@ -86,7 +89,7 @@ export default function ResetPasswordPage() {
           error?.data?.message ||
             "Invalid password reset request. Please start over."
         );
-        navigate("/auth/otp-verification/?status=not-verified");
+        // navigate("/auth/otp-verification/?status=not-verified");
       }
       toast.error(
         error?.data?.message || "Failed to reset password. Please try again."
