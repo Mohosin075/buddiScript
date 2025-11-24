@@ -12,7 +12,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { checkEmailProvider } from "@/lib/checkEmailProvider";
+// import { checkEmailProvider } from "@/lib/checkEmailProvider";
 import { useRegisterMutation } from "@/redux/api/authApi";
 import { setCredentials } from "@/redux/slices/authSlice";
 import Cookies from "js-cookie";
@@ -49,16 +49,16 @@ export default function SignupPage() {
       toast.error("Passwords do not match");
       return;
     }
-    const isValidTLD = checkEmailProvider(formData.email);
+    // const isValidTLD = checkEmailProvider(formData.email);
 
-    console.log(isValidTLD);
-    if (!isValidTLD) {
-      setError(
-        "Invalid email provider. For example, 'gmail.com', 'yahoo.com', 'outlook.com', 'protonmail.com', 'icloud.com', 'hotmail.com', 'aol.com', 'mail.com', 'yandex.com'"
-      );
-      toast.error("Invalid email domain. Please use a valid top-level domain.");
-      return;
-    }
+    // console.log(isValidTLD);
+    // if (!isValidTLD) {
+    //   setError(
+    //     "Invalid email provider. For example, 'gmail.com', 'yahoo.com', 'outlook.com', 'protonmail.com', 'icloud.com', 'hotmail.com', 'aol.com', 'mail.com', 'yandex.com'"
+    //   );
+    //   toast.error("Invalid email domain. Please use a valid top-level domain.");
+    //   return;
+    // }
     setIsLoading(true);
 
     console.log({formData})
