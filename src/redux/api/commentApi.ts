@@ -91,7 +91,7 @@ export const commentApi = createApi({
         body: data,
       }),
       transformResponse: (response: SingleCommentResponse) => response.data,
-      invalidatesTags: (result, error, { id }) => [
+      invalidatesTags: (_result, _error, { id }) => [
         { type: "Comment", id },
         { type: "Comment", id: "LIST" },
       ],

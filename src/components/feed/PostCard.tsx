@@ -48,7 +48,7 @@ const PostCard = ({ post }: PostCardProps) => {
   });
 
   const { data } = useGetProfileQuery();
-  const user = data?.data;
+  // const user = data?.data;
 
   // Get first media item for the main image
   const firstMedia = post.media_source?.[0];
@@ -128,13 +128,13 @@ const PostCard = ({ post }: PostCardProps) => {
     }
   };
 
-  const handleDeleteComment = async (commentId: string) => {
-    try {
-      await deleteComment(commentId).unwrap();
-    } catch (error) {
-      console.error("Failed to delete comment:", error);
-    }
-  };
+  // const handleDeleteComment = async (commentId: string) => {
+  //   try {
+  //     await deleteComment(commentId).unwrap();
+  //   } catch (error) {
+  //     console.error("Failed to delete comment:", error);
+  //   }
+  // };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
