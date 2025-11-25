@@ -93,11 +93,11 @@ const PostCard = ({ post }: PostCardProps) => {
 
             {/* Show first media item if exists */}
             {firstMedia && firstMedia.type === "image" && (
-              <div className="flex justify-center">
+              <div className="flex justify-center w-full">
                 <img
                   src={`${MEDIA_URL}${firstMedia.url}`}
                   alt="Post content"
-                  className="max-w-full max-h-96 object-contain rounded-lg border"
+                  className="max-w-full max-h-[440px] object-contain rounded-lg border"
                 />
               </div>
             )}

@@ -7,11 +7,13 @@ import { toast } from "sonner";
 
 const CreatePost = () => {
   const [content, setContent] = useState("");
-  const [selectedImage, setSelectedImage] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [selectedMedia, setSelectedMedia] = useState<File | null>(null);
+  const [mediaPreview, setMediaPreview] = useState<string | null>(null);
+  const [mediaType, setMediaType] = useState<"image" | "video" | null>(null);
   const [createPost, { isLoading }] = useCreatePostMutation();
 
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
+  const videoInputRef = useRef<HTMLInputElement>(null);
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -27,31 +29,55 @@ const CreatePost = () => {
       return;
     }
 
-    // Only one image allowed — replace any existing image
-    if (imagePreview) URL.revokeObjectURL(imagePreview);
+    // Clear previous media
+    if (mediaPreview) URL.revokeObjectURL(mediaPreview);
 
-    setSelectedImage(file);
-    setImagePreview(URL.createObjectURL(file));
+    setSelectedMedia(file);
+    setMediaType("image");
+    setMediaPreview(URL.createObjectURL(file));
   };
 
-  const removeImage = () => {
-    if (imagePreview) {
-      URL.revokeObjectURL(imagePreview);
+  const handleVideoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("video/")) {
+      toast.error("Please select only video files");
+      return;
     }
-    setSelectedImage(null);
-    setImagePreview(null);
+
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error(`Video ${file.name} is too large. Maximum size is 10MB`);
+      return;
+    }
+
+    // Clear previous media
+    if (mediaPreview) URL.revokeObjectURL(mediaPreview);
+
+    setSelectedMedia(file);
+    setMediaType("video");
+    setMediaPreview(URL.createObjectURL(file));
+  };
+
+  const removeMedia = () => {
+    if (mediaPreview) {
+      URL.revokeObjectURL(mediaPreview);
+    }
+    setSelectedMedia(null);
+    setMediaPreview(null);
+    setMediaType(null);
   };
 
   const handleSubmit = async () => {
     try {
-      // Validation: require either text or image; if image present, require text
-      if (!content.trim() && !selectedImage) {
-        toast.error("Please write something or add an image to post");
+      // Validation: require either text or media; if media present, require text
+      if (!content.trim() && !selectedMedia) {
+        toast.error("Please write something or add media to post");
         return;
       }
 
-      if (selectedImage && !content.trim()) {
-        toast.error("Please add a caption/text when posting an image");
+      if (selectedMedia && !content.trim()) {
+        toast.error("Please add a caption/text when posting media");
         return;
       }
 
@@ -63,20 +89,25 @@ const CreatePost = () => {
       };
       formData.append("data", JSON.stringify(postData));
 
-      if (selectedImage) {
-        formData.append("images", selectedImage);
+      if (selectedMedia) {
+        if (mediaType === "image") {
+          formData.append("images", selectedMedia);
+        } else if (mediaType === "video") {
+          formData.append("media", selectedMedia);
+        }
       }
 
-      // Use the Redux mutation to create the post (handles auth headers)
+      // Use the Redux mutation to create the post
       await createPost(formData).unwrap();
 
       // Clear form and revoke preview URL
       setContent("");
-      if (imagePreview) {
-        URL.revokeObjectURL(imagePreview);
+      if (mediaPreview) {
+        URL.revokeObjectURL(mediaPreview);
       }
-      setSelectedImage(null);
-      setImagePreview(null);
+      setSelectedMedia(null);
+      setMediaPreview(null);
+      setMediaType(null);
 
       toast.success("Post created successfully!");
 
@@ -92,12 +123,12 @@ const CreatePost = () => {
     {
       icon: <Camera className="w-4 h-4" />,
       label: "Photo",
-      onClick: () => fileInputRef.current?.click(),
+      onClick: () => imageInputRef.current?.click(),
     },
     {
       icon: <Video className="w-4 h-4" />,
       label: "Video",
-      onClick: () => toast.info("Video upload coming soon"),
+      onClick: () => videoInputRef.current?.click(),
     },
     {
       icon: <Calendar className="w-4 h-4" />,
@@ -118,12 +149,19 @@ const CreatePost = () => {
 
   return (
     <>
-      {/* Hidden file input */}
+      {/* Hidden file inputs */}
       <input
         type="file"
-        ref={fileInputRef}
+        ref={imageInputRef}
         onChange={handleImageSelect}
         accept="image/*"
+        className="hidden"
+      />
+      <input
+        type="file"
+        ref={videoInputRef}
+        onChange={handleVideoSelect}
+        accept="video/*"
         className="hidden"
       />
 
@@ -151,19 +189,32 @@ const CreatePost = () => {
             />
           </div>
 
-          {/* Image previews */}
-          {imagePreview && (
+          {/* Media preview */}
+          {mediaPreview && (
             <div className="mb-4">
               <div className="flex flex-wrap gap-2">
                 <div className="relative">
-                  <img
-                    src={imagePreview}
-                    alt={`Preview`}
-                    className="w-20 h-20 object-cover rounded-lg border"
-                  />
+                  {mediaType === "image" ? (
+                    <img
+                      src={mediaPreview}
+                      alt="Preview"
+                      className="w-20 h-20 object-cover rounded-lg border"
+                    />
+                  ) : (
+                    <div className="relative">
+                      <video
+                        src={mediaPreview}
+                        className="w-20 h-20 object-cover rounded-lg border"
+                        muted
+                      />
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <Video className="w-8 h-8 text-white opacity-70" />
+                      </div>
+                    </div>
+                  )}
                   <button
                     type="button"
-                    onClick={removeImage}
+                    onClick={removeMedia}
                     className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full p-1 w-6 h-6 flex items-center justify-center text-xs"
                   >
                     <X className="w-3 h-3" />
@@ -179,7 +230,7 @@ const CreatePost = () => {
                 key={item.label}
                 className={`text-muted-foreground py-2 w-full hover:text-primary transition-colors duration-200 cursor-pointer ${
                   item.label === "Post"
-                    ? "border-r-0 bg-primary hover:bg-primary text-background hover:text-background rounded-2xl"
+                    ? "border-r-0 bg-primary hover:bg-primary text-white hover:text-white rounded-2xl"
                     : ""
                 } ${isLoading ? "opacity-50 cursor-not-allowed" : ""}`}
                 onClick={isLoading ? undefined : item.onClick}
