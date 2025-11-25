@@ -6,7 +6,6 @@ import { useGetAllPostsQuery } from "@/redux/api/postApi";
 const Feed = () => {
   const {
     data: postData,
-    refetch,
     isLoading: usersIsLoading,
   } = useGetAllPostsQuery();
 

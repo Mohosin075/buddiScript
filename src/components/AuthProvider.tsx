@@ -1,5 +1,5 @@
-import { ReactNode } from "react";
 import { useAuthPersistence } from "@/redux/auth-persistence";
+import type { ReactNode } from "react";
 
 /**
  * AuthProvider wraps the app and ensures auth data is restored from localStorage on mount.
