@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -30,6 +31,12 @@ import {
   useCheckLikeStatusQuery,
   useGetLikesCountQuery,
 } from "@/redux/api/likeApi";
+import { useGetProfileQuery } from "@/redux/api/userApi";
+import {
+  useGetCommentsByPostQuery,
+  useCreateCommentMutation,
+  useDeleteCommentMutation,
+} from "@/redux/api/commentApi";
 
 interface PostCardProps {
   post: Post;
@@ -39,6 +46,9 @@ const PostCard = ({ post }: PostCardProps) => {
   const formattedDate = formatDistanceToNow(new Date(post.createdAt), {
     addSuffix: true,
   });
+
+  const { data } = useGetProfileQuery();
+  const user = data?.data;
 
   // Get first media item for the main image
   const firstMedia = post.media_source?.[0];
@@ -58,6 +68,24 @@ const PostCard = ({ post }: PostCardProps) => {
   const [optimisticLikesCount, setOptimisticLikesCount] = useState<number>(
     post.metadata.likeCount || 0
   );
+
+  // Comments functionality
+  const [commentText, setCommentText] = useState("");
+  const [showAllComments, setShowAllComments] = useState(false);
+
+  const { data: commentsData, isLoading: commentsLoading } =
+    useGetCommentsByPostQuery({
+      postId: post._id,
+      page: 1,
+      limit: 10,
+    });
+
+  const [createComment, { isLoading: isCreatingComment }] =
+    useCreateCommentMutation();
+  const [deleteComment] = useDeleteCommentMutation();
+
+  const comments = commentsData?.comments || [];
+  const totalComments = commentsData?.total || post.metadata.commentCount || 0;
 
   useEffect(() => {
     setOptimisticLiked(likeStatus?.liked ?? false);
@@ -86,9 +114,41 @@ const PostCard = ({ post }: PostCardProps) => {
     }
   };
 
+  const handleCreateComment = async () => {
+    if (!commentText.trim()) return;
+
+    try {
+      await createComment({
+        postId: post._id,
+        content: commentText.trim(),
+      }).unwrap();
+      setCommentText("");
+    } catch (error) {
+      console.error("Failed to create comment:", error);
+    }
+  };
+
+  const handleDeleteComment = async (commentId: string) => {
+    try {
+      await deleteComment(commentId).unwrap();
+    } catch (error) {
+      console.error("Failed to delete comment:", error);
+    }
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleCreateComment();
+    }
+  };
+
   // Use the data directly from the query
   const isLiked = optimisticLiked;
   const currentLikesCount = optimisticLikesCount;
+
+  // Determine which comments to show
+  const displayedComments = showAllComments ? comments : comments.slice(0, 2);
 
   return (
     <Card className="mb-6">
@@ -218,7 +278,7 @@ const PostCard = ({ post }: PostCardProps) => {
             </div>
             <div className="flex items-center gap-5 text-muted-foreground ">
               <div>{currentLikesCount} likes</div>
-              <div>{post.metadata.commentCount} comments</div>
+              <div>{totalComments} comments</div>
               <div>{post.metadata.shareCount} shares</div>
             </div>
           </div>
@@ -271,53 +331,79 @@ const PostCard = ({ post }: PostCardProps) => {
                   <input
                     type="text"
                     placeholder="Write a comment..."
-                    className="w-full bg-input rounded-full px-4 py-2 pr-12  text-foreground placeholder:text-muted-foreground border-none outline-none focus:ring-2 focus:ring-primary focus:bg-white transition-colors duration-200 text-lg ps-14"
+                    className="w-full bg-input rounded-full px-4 py-2 pr-12 text-foreground placeholder:text-muted-foreground border-none outline-none focus:ring-2 focus:ring-primary focus:bg-white transition-colors duration-200 text-lg ps-14"
+                    value={commentText}
+                    onChange={(e) => setCommentText(e.target.value)}
+                    onKeyPress={handleKeyPress}
+                    disabled={isCreatingComment}
                   />
-                  <button className="absolute right-3 top-1/2 transform -translate-y-1/2 text-primary hover:text-primary/80 transition-colors cursor-pointer p-2">
+                  <button
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-primary hover:text-primary/80 transition-colors cursor-pointer p-2"
+                    onClick={handleCreateComment}
+                    disabled={isCreatingComment || !commentText.trim()}
+                  >
                     <Send className="h-6 w-6" />
                   </button>
                 </div>
               </div>
             </div>
 
-            {/* View previous comments */}
-            <div className="text-sm text-muted-foreground cursor-pointer hover:text-primary">
-              View {post.metadata.commentCount || 4} previous comments
-            </div>
-
-            {/* Existing comment */}
-            <div className="flex space-x-3">
-              <Avatar className="h-10 w-10">
-                <AvatarImage src="images/img11.png" />
-                <AvatarFallback>KS</AvatarFallback>
-              </Avatar>
-              <div className="flex-1">
-                <div className="bg-muted/50 rounded-lg p-3">
-                  <div className="font-semibold text-sm">
-                    Radovan SkillArena
-                  </div>
-                  <p className="text-sm mt-1 text-muted-foreground ">
-                    It is a long established fact that a reader will be
-                    distracted by the readable content of a page when looking at
-                    its layout.
-                  </p>
-                </div>
-                <div className="flex items-center space-x-2 mt-2 text-xs">
-                  <span className="cursor-pointer hover:text-primary">
-                    Like
-                  </span>
-                  <span>.</span>
-                  <span className="cursor-pointer hover:text-primary">
-                    Reply
-                  </span>
-                  <span>.</span>
-                  <span className="cursor-pointer hover:text-primary">
-                    Share
-                  </span>
-                  <span>· 21m</span>
-                </div>
+            {/* Comments list */}
+            {commentsLoading ? (
+              <div className="text-center text-muted-foreground py-4">
+                Loading comments...
               </div>
-            </div>
+            ) : (
+              <>
+                {/* Show/hide comments toggle */}
+                {totalComments > 2 && comments.length > 2 && (
+                  <div
+                    className="text-sm text-muted-foreground cursor-pointer hover:text-primary"
+                    onClick={() => setShowAllComments(!showAllComments)}
+                  >
+                    {showAllComments
+                      ? "Show fewer comments"
+                      : `View all ${totalComments} comments`}
+                  </div>
+                )}
+
+                {/* Comments list */}
+                {displayedComments.map((comment) => (
+                  <div key={comment._id} className="flex space-x-3">
+                    <Avatar className="h-10 w-10">
+                      <AvatarImage
+                        src={comment.userId.avatar}
+                        alt={`User ${comment.userId._id}`}
+                      />
+                      <AvatarFallback>
+                        {comment.userId.firstName?.[0] || "U"}
+                        {comment.userId.lastName?.[0] || "S"}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1">
+                      <div className="bg-muted/50 rounded-lg p-3">
+                        <div className="font-semibold text-sm">
+                          {comment.userId.firstName && comment.userId.lastName
+                            ? `${comment.userId.firstName} ${comment.userId.lastName}`
+                            : `User ${comment.userId._id.slice(-6)}`}
+                        </div>
+                        <p className="text-sm mt-1 text-muted-foreground">
+                          {comment.content}
+                        </p>
+                      </div>
+                      {/* Rest of comment UI */}
+                    </div>
+                  </div>
+                ))}
+
+                {/* Show message if no comments */}
+                {comments.length === 0 && (
+                  <div className="text-center text-muted-foreground py-4 text-sm">
+                    No comments yet. Be the first to comment!
+                  </div>
+                )}
+              </>
+            )}
           </div>
         </div>
       </CardContent>
