@@ -25,7 +25,6 @@ import {
 import { formatDistanceToNow } from "date-fns";
 import { useEffect, useState } from "react";
 import type { Post } from "@/types/postApi.interface";
-import { MEDIA_URL } from "@/lib/Base_URL";
 import {
   useToggleLikeMutation,
   useCheckLikeStatusQuery,
@@ -207,7 +206,7 @@ const PostCard = ({ post }: PostCardProps) => {
             {firstMedia && firstMedia.type === "image" && (
               <div className="flex justify-center w-full">
                 <img
-                  src={`${MEDIA_URL}${firstMedia.url}`}
+                  src={`${firstMedia.url}`}
                   alt="Post content"
                   className="max-w-full max-h-[440px] object-contain rounded-lg border"
                 />
@@ -224,12 +223,12 @@ const PostCard = ({ post }: PostCardProps) => {
                   className="max-w-full max-h-96 object-contain rounded-lg border"
                   poster={
                     firstMedia.thumbnail
-                      ? `${MEDIA_URL}${firstMedia.thumbnail}`
+                      ? `${firstMedia.thumbnail}`
                       : undefined
                   }
                 >
                   <source
-                    src={`${MEDIA_URL}${firstMedia.url}`}
+                    src={`${firstMedia.url}`}
                     type="video/mp4"
                   />
                   Your browser does not support the video tag.
