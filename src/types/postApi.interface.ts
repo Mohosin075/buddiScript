@@ -16,19 +16,20 @@ export interface PostMetadata {
 
 export interface Post {
   _id: string;
-  userId: string;
+  userId: string | null;
   content: string;
   media_source: MediaItem[];
   privacy: 'public' | 'private';
   tags: string[];
   isEdited: boolean;
   editedAt?: string;
-  sharedPostId?: string;
+  sharedPostId?: string | null;
   isShared: boolean;
   shareCaption?: string;
   metadata: PostMetadata;
   createdAt: string;
   updatedAt: string;
+  id: string; // Some posts have both _id and id
 }
 
 export interface CreatePostRequest {
@@ -45,4 +46,27 @@ export interface UpdatePostRequest {
   media_source?: MediaItem[];
   privacy?: 'public' | 'private';
   tags?: string[];
+}
+
+// API Response types
+export interface PostsResponse {
+  statusCode: number;
+  success: boolean;
+  message: string;
+  data: {
+    meta: {
+      page: number;
+      limit: number;
+      total: number;
+      totalPages: number;
+    };
+    data: Post[];
+  };
+}
+
+export interface SinglePostResponse {
+  statusCode: number;
+  success: boolean;
+  message: string;
+  data: Post;
 }

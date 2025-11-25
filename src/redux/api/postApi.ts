@@ -2,7 +2,13 @@ import { BASE_URL } from "@/lib/Base_URL";
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import type { RootState } from "../store";
 import { asBearer, getAuthToken } from "@/lib/authToken";
-import type { CreatePostRequest, Post, UpdatePostRequest } from "@/types/postApi.interface";
+import type { 
+  CreatePostRequest, 
+  Post, 
+  UpdatePostRequest, 
+  PostsResponse, 
+  SinglePostResponse 
+} from "@/types/postApi.interface";
 
 export const postApi = createApi({
   reducerPath: "postApi",
@@ -24,21 +30,24 @@ export const postApi = createApi({
   }),
   tagTypes: ["Post"],
   endpoints: (builder) => ({
-    // Get all posts - SIMPLIFIED
-    getAllPosts: builder.query<Post, void>({
+    // Get all posts - Updated to handle the response structure
+    getAllPosts: builder.query<Post[], void>({
       query: () => "/",
+      transformResponse: (response: PostsResponse) => response.data.data,
       providesTags: ["Post"],
     }),
 
-    // Get my posts - SIMPLIFIED
+    // Get my posts - Updated to handle the response structure
     getMyPosts: builder.query<Post[], void>({
       query: () => "/my-post",
+      transformResponse: (response: PostsResponse) => response.data.data,
       providesTags: ["Post"],
     }),
 
-    // Get single post - SIMPLIFIED
+    // Get single post - Updated to handle the response structure
     getSinglePost: builder.query<Post, string>({
       query: (id) => `/${id}`,
+      transformResponse: (response: SinglePostResponse) => response.data,
       providesTags: ["Post"],
     }),
 
@@ -49,6 +58,7 @@ export const postApi = createApi({
         method: "POST",
         body: postData,
       }),
+      transformResponse: (response: SinglePostResponse) => response.data,
       invalidatesTags: ["Post"],
     }),
 
@@ -59,6 +69,7 @@ export const postApi = createApi({
         method: "PATCH",
         body: data,
       }),
+      transformResponse: (response: SinglePostResponse) => response.data,
       invalidatesTags: ["Post"],
     }),
 

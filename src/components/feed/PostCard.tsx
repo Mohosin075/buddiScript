@@ -13,7 +13,6 @@ import {
   ThumbsUp,
   Trash2,
 } from "lucide-react";
-
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,7 +20,22 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-const PostCard = () => {
+import { formatDistanceToNow } from "date-fns";
+import type { Post } from "@/types/postApi.interface";
+import { MEDIA_URL } from "@/lib/Base_URL";
+
+interface PostCardProps {
+  post: Post;
+}
+
+const PostCard = ({ post }: PostCardProps) => {
+  const formattedDate = formatDistanceToNow(new Date(post.createdAt), {
+    addSuffix: true,
+  });
+
+  // Get first media item for the main image
+  const firstMedia = post.media_source?.[0];
+
   return (
     <Card className="mb-6">
       <CardContent className="p-0">
@@ -36,7 +50,7 @@ const PostCard = () => {
               <div>
                 <div className="font-semibold">Karim Saif</div>
                 <div className="text-xs text-muted-foreground">
-                  5 minute ago · Public
+                  {formattedDate} · {post.privacy}
                 </div>
               </div>
             </div>
@@ -75,10 +89,46 @@ const PostCard = () => {
 
           {/* Post content */}
           <div className="mb-7">
-            <h3 className="font-semibold mb-2 text-lg">Healthy Tracking App</h3>
-            <img src="/images/timeline_img.png" alt="" />
+            <p className="font-semibold mb-2 text-lg">{post.content}</p>
+
+            {/* Show first media item if exists */}
+            {firstMedia && firstMedia.type === "image" && (
+              <img
+                src={`${MEDIA_URL}/${firstMedia.url}`}
+                alt="Post content"
+                className="w-full rounded-lg"
+              />
+            )}
+
+            {/* Show video if first media is video */}
+            {firstMedia && firstMedia.type === "video" && (
+              <video
+                controls
+                className="w-full rounded-lg"
+                poster={
+                  firstMedia.thumbnail
+                    ? `${MEDIA_URL}${firstMedia.thumbnail}`
+                    : undefined
+                }
+              >
+                <source
+                  src={`${MEDIA_URL}${firstMedia.url}`}
+                  type="video/mp4"
+                />
+                Your browser does not support the video tag.
+              </video>
+            )}
+
+            {/* Show placeholder if no media */}
+            {!firstMedia && (
+              <img
+                src={`${MEDIA_URL}/images/timeline_img.png`}
+                alt="Default post"
+              />
+            )}
           </div>
-          <div className="flex items-center justify-between  mb-4">
+
+          <div className="flex items-center justify-between mb-4">
             <div className="*:data-[slot=avatar]:ring-background flex -space-x-2 *:data-[slot=avatar]:ring-2 *:data-[slot=avatar]">
               <Avatar>
                 <AvatarImage
@@ -108,10 +158,11 @@ const PostCard = () => {
               </Avatar>
             </div>
             <div className="flex items-center gap-5 text-muted-foreground ">
-              <div>12 comments</div>
-              <div>320 share</div>
+              <div>{post.metadata.commentCount} comments</div>
+              <div>{post.metadata.shareCount} shares</div>
             </div>
           </div>
+
           {/* Action buttons - Like, Comment, Share */}
           <div className="flex justify-between py-2 mb-4 bg-background">
             <Button
@@ -164,7 +215,7 @@ const PostCard = () => {
 
             {/* View previous comments */}
             <div className="text-sm text-muted-foreground cursor-pointer hover:text-primary">
-              View 4 previous comments
+              View {post.metadata.commentCount || 4} previous comments
             </div>
 
             {/* Existing comment */}
