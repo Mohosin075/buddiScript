@@ -24,8 +24,8 @@ const CreatePost = () => {
       return;
     }
 
-    if (file.size > 10 * 1024 * 1024) {
-      toast.error(`Image ${file.name} is too large. Maximum size is 10MB`);
+    if (file.size > 20 * 1024 * 1024) {
+      toast.error(`Image ${file.name} is too large. Maximum size is 20MB`);
       return;
     }
 
@@ -46,8 +46,8 @@ const CreatePost = () => {
       return;
     }
 
-    if (file.size > 10 * 1024 * 1024) {
-      toast.error(`Video ${file.name} is too large. Maximum size is 10MB`);
+    if (file.size > 20 * 1024 * 1024) {
+      toast.error(`Video ${file.name} is too large. Maximum size is 20MB`);
       return;
     }
 
@@ -76,10 +76,10 @@ const CreatePost = () => {
         return;
       }
 
-      if (selectedMedia && !content.trim()) {
-        toast.error("Please add a caption/text when posting media");
-        return;
-      }
+      // if (selectedMedia && !content.trim()) {
+      //   toast.error("Please add a caption/text when posting media");
+      //   return;
+      // }
 
       const formData = new FormData();
       const postData = {
