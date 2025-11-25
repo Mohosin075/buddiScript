@@ -93,38 +93,54 @@ const PostCard = ({ post }: PostCardProps) => {
 
             {/* Show first media item if exists */}
             {firstMedia && firstMedia.type === "image" && (
-              <img
-                src={`${MEDIA_URL}/${firstMedia.url}`}
-                alt="Post content"
-                className="w-full rounded-lg"
-              />
+              <div className="flex justify-center">
+                <img
+                  src={`${MEDIA_URL}${firstMedia.url}`}
+                  alt="Post content"
+                  className="max-w-full max-h-96 object-contain rounded-lg border"
+                />
+              </div>
             )}
 
             {/* Show video if first media is video */}
             {firstMedia && firstMedia.type === "video" && (
-              <video
-                controls
-                className="w-full rounded-lg"
-                poster={
-                  firstMedia.thumbnail
-                    ? `${MEDIA_URL}${firstMedia.thumbnail}`
-                    : undefined
-                }
-              >
-                <source
-                  src={`${MEDIA_URL}${firstMedia.url}`}
-                  type="video/mp4"
-                />
-                Your browser does not support the video tag.
-              </video>
+              <div className="flex justify-center">
+                <video
+                  controls
+                  autoPlay={true}
+                  muted
+                  className="max-w-full max-h-96 object-contain rounded-lg border"
+                  poster={
+                    firstMedia.thumbnail
+                      ? `${MEDIA_URL}${firstMedia.thumbnail}`
+                      : undefined
+                  }
+                >
+                  <source
+                    src={`${MEDIA_URL}${firstMedia.url}`}
+                    type="video/mp4"
+                  />
+                  Your browser does not support the video tag.
+                </video>
+              </div>
             )}
 
             {/* Show placeholder if no media */}
             {!firstMedia && (
-              <img
-                src={`${MEDIA_URL}/images/timeline_img.png`}
-                alt="Default post"
-              />
+              <div className="flex justify-center">
+                <img
+                  src={`${MEDIA_URL}/images/timeline_img.png`}
+                  alt="Default post"
+                  className="max-w-full max-h-96 object-contain rounded-lg"
+                />
+              </div>
+            )}
+
+            {/* Show multiple media indicator if more than 1 media */}
+            {post.media_source && post.media_source.length > 1 && (
+              <div className="text-center mt-2 text-sm text-muted-foreground">
+                +{post.media_source.length - 1} more
+              </div>
             )}
           </div>
 
