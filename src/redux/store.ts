@@ -1,23 +1,23 @@
-import { configureStore } from "@reduxjs/toolkit"
-import { authApi } from "./api/authApi"
-import { userApi } from "./api/userApi"
-import authReducer from "./slices/authSlice"
-import { postApi } from "./api/postApi"
+// store.ts
+import { configureStore } from "@reduxjs/toolkit";
+import { userApi } from "./api/userApi";
+import { postApi } from "./api/postApi";
+import { likeApi } from "./api/likeApi"; // Import the likeApi
+import authReducer from "./slices/authSlice";
 
 export const store = configureStore({
   reducer: {
     auth: authReducer,
-    [authApi.reducerPath]: authApi.reducer,
     [userApi.reducerPath]: userApi.reducer,
     [postApi.reducerPath]: postApi.reducer,
+    [likeApi.reducerPath]: likeApi.reducer, // Add likeApi reducer
   },
   middleware: (getDefaultMiddleware) =>
-    getDefaultMiddleware({
-      serializableCheck: {
-        ignoredActions: ["persist/PERSIST", "persist/REHYDRATE"],
-      },
-    }).concat(authApi.middleware,userApi.middleware,postApi.middleware),
-})
+    getDefaultMiddleware()
+      .concat(userApi.middleware)
+      .concat(postApi.middleware)
+      .concat(likeApi.middleware), // Add likeApi middleware
+});
 
-export type RootState = ReturnType<typeof store.getState>
-export type AppDispatch = typeof store.dispatch
+export type RootState = ReturnType<typeof store.getState>;
+export type AppDispatch = typeof store.dispatch;

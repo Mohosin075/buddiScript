@@ -66,14 +66,19 @@ export const authApi = createApi({
     }),
     login: builder.mutation<AuthResponse, LoginRequest>({
       query: (credentials) => ({
-        url: "/login",
+        url: "/custom-login",
         method: "POST",
         body: credentials,
       }),
     }),
     resetPassword: builder.mutation<
       { message: string },
-      { email: string; newPassword: string; confirmPassword: string , token?: string }
+      {
+        email: string;
+        newPassword: string;
+        confirmPassword: string;
+        token?: string;
+      }
     >({
       query: (data) => ({
         url: "/reset-password",
@@ -90,7 +95,7 @@ export const authApi = createApi({
       }),
     }),
     verifyOtp: builder.mutation<
-      { message: string; success: boolean , data: { token: string } },
+      { message: string; success: boolean; data: { token: string } },
       { email: string; oneTimeCode: string }
     >({
       query: (data) => ({

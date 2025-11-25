@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -21,8 +22,14 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { formatDistanceToNow } from "date-fns";
+import { useEffect, useState } from "react";
 import type { Post } from "@/types/postApi.interface";
 import { MEDIA_URL } from "@/lib/Base_URL";
+import {
+  useToggleLikeMutation,
+  useCheckLikeStatusQuery,
+  useGetLikesCountQuery,
+} from "@/redux/api/likeApi";
 
 interface PostCardProps {
   post: Post;
@@ -35,6 +42,53 @@ const PostCard = ({ post }: PostCardProps) => {
 
   // Get first media item for the main image
   const firstMedia = post.media_source?.[0];
+
+  // Like functionality
+  const [toggleLike] = useToggleLikeMutation();
+  const { data: likeStatus } = useCheckLikeStatusQuery({
+    targetId: post._id,
+    targetType: "post",
+  });
+  const { data: likesCount } = useGetLikesCountQuery({
+    targetId: post._id,
+    targetType: "post",
+  });
+
+  const [optimisticLiked, setOptimisticLiked] = useState<boolean>(false);
+  const [optimisticLikesCount, setOptimisticLikesCount] = useState<number>(
+    post.metadata.likeCount || 0
+  );
+
+  useEffect(() => {
+    setOptimisticLiked(likeStatus?.liked ?? false);
+  }, [likeStatus]);
+
+  useEffect(() => {
+    const c = likesCount !== undefined ? likesCount : post.metadata.likeCount;
+    setOptimisticLikesCount(c ?? 0);
+  }, [likesCount, post.metadata.likeCount]);
+
+  const handleLikeToggle = async () => {
+    const wasLiked = optimisticLiked;
+    const prevCount = optimisticLikesCount;
+    const nextLiked = !wasLiked;
+    const nextCount = prevCount + (nextLiked ? 1 : -1);
+    setOptimisticLiked(nextLiked);
+    setOptimisticLikesCount(Math.max(0, nextCount));
+    try {
+      await toggleLike({
+        targetId: post._id,
+        targetType: "post",
+      }).unwrap();
+    } catch (error) {
+      setOptimisticLiked(wasLiked);
+      setOptimisticLikesCount(prevCount);
+    }
+  };
+
+  // Use the data directly from the query
+  const isLiked = optimisticLiked;
+  const currentLikesCount = optimisticLikesCount;
 
   return (
     <Card className="mb-6">
@@ -125,17 +179,6 @@ const PostCard = ({ post }: PostCardProps) => {
               </div>
             )}
 
-            {/* Show placeholder if no media */}
-            {/* {!firstMedia && (
-              <div className="flex justify-center">
-                <img
-                  src={`${MEDIA_URL}/images/timeline_img.png`}
-                  alt="Default post"
-                  className="max-w-full max-h-96 object-contain rounded-lg"
-                />
-              </div>
-            )} */}
-
             {/* Show multiple media indicator if more than 1 media */}
             {post.media_source && post.media_source.length > 1 && (
               <div className="text-center mt-2 text-sm text-muted-foreground">
@@ -174,6 +217,7 @@ const PostCard = ({ post }: PostCardProps) => {
               </Avatar>
             </div>
             <div className="flex items-center gap-5 text-muted-foreground ">
+              <div>{currentLikesCount} likes</div>
               <div>{post.metadata.commentCount} comments</div>
               <div>{post.metadata.shareCount} shares</div>
             </div>
@@ -184,15 +228,22 @@ const PostCard = ({ post }: PostCardProps) => {
             <Button
               variant="ghost"
               size="lg"
-              className="flex-1 text-muted-foreground hover:text-primary rounded-none"
+              className={`flex-1 rounded-none transition-colors duration-200 ${
+                isLiked
+                  ? "bg-primary/10 text-primary hover:bg-primary/20 hover:text-primary"
+                  : "text-muted-foreground hover:text-primary hover:bg-primary/5"
+              }`}
+              onClick={handleLikeToggle}
             >
-              <ThumbsUp className="h-4 w-4 mr-2" />
-              Like
+              <ThumbsUp
+                className={`h-4 w-4 mr-2 ${isLiked ? "fill-current" : ""}`}
+              />
+              {isLiked ? "Liked" : "Like"}
             </Button>
             <Button
               variant="ghost"
               size="lg"
-              className="flex-1 text-muted-foreground hover:text-primary rounded-none"
+              className="flex-1 text-muted-foreground hover:text-primary hover:bg-primary/5 rounded-none"
             >
               <MessageCircle className="h-4 w-4 mr-2" />
               Comment
@@ -200,7 +251,7 @@ const PostCard = ({ post }: PostCardProps) => {
             <Button
               variant="ghost"
               size="lg"
-              className="flex-1 text-muted-foreground hover:text-primary rounded-none"
+              className="flex-1 text-muted-foreground hover:text-primary hover:bg-primary/5 rounded-none"
             >
               <Share2 className="h-4 w-4 mr-2" />
               Share
