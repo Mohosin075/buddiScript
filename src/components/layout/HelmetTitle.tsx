@@ -6,12 +6,12 @@ type HelmetTitleProps = {
 };
 
 const HelmetTitle = ({
-  title = "PayWallet",
-  description = "PayWallet is a digital wallet for payments",
+  title = "buddiScript",
+  description = "buddiScript is a digital content sharing platform",
 }: HelmetTitleProps) => {
   return (
     <Helmet>
-      <title>{title ? `${title} - PayWallet` : "PayWallet"}</title>
+      <title>{title ? `${title} - buddiScript` : "buddiScript"}</title>
       <meta name="description" content={description} />
     </Helmet>
   );
