@@ -47,7 +47,7 @@ const PostCard = ({ post }: PostCardProps) => {
     addSuffix: true,
   });
 
-  const { data } = useGetProfileQuery();
+  // const { data } = useGetProfileQuery();
   // const user = data?.data;
 
   // Get first media item for the main image
@@ -82,7 +82,7 @@ const PostCard = ({ post }: PostCardProps) => {
 
   const [createComment, { isLoading: isCreatingComment }] =
     useCreateCommentMutation();
-  const [deleteComment] = useDeleteCommentMutation();
+  // const [deleteComment] = useDeleteCommentMutation();
 
   const comments = commentsData?.comments || [];
   const totalComments = commentsData?.total || post.metadata.commentCount || 0;
