@@ -31,11 +31,9 @@ import {
   useCheckLikeStatusQuery,
   useGetLikesCountQuery,
 } from "@/redux/api/likeApi";
-import { useGetProfileQuery } from "@/redux/api/userApi";
 import {
   useGetCommentsByPostQuery,
   useCreateCommentMutation,
-  useDeleteCommentMutation,
 } from "@/redux/api/commentApi";
 
 interface PostCardProps {
