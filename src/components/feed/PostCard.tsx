@@ -126,7 +126,7 @@ const PostCard = ({ post }: PostCardProps) => {
             )}
 
             {/* Show placeholder if no media */}
-            {!firstMedia && (
+            {/* {!firstMedia && (
               <div className="flex justify-center">
                 <img
                   src={`${MEDIA_URL}/images/timeline_img.png`}
@@ -134,7 +134,7 @@ const PostCard = ({ post }: PostCardProps) => {
                   className="max-w-full max-h-96 object-contain rounded-lg"
                 />
               </div>
-            )}
+            )} */}
 
             {/* Show multiple media indicator if more than 1 media */}
             {post.media_source && post.media_source.length > 1 && (

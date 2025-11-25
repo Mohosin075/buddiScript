@@ -2,12 +2,11 @@ import { BASE_URL } from "@/lib/Base_URL";
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import type { RootState } from "../store";
 import { asBearer, getAuthToken } from "@/lib/authToken";
-import type { 
-  CreatePostRequest, 
-  Post, 
-  UpdatePostRequest, 
-  PostsResponse, 
-  SinglePostResponse 
+import type {
+  Post,
+  UpdatePostRequest,
+  PostsResponse,
+  SinglePostResponse,
 } from "@/types/postApi.interface";
 
 export const postApi = createApi({
@@ -52,26 +51,29 @@ export const postApi = createApi({
     }),
 
     // Create post
-    createPost: builder.mutation<Post, CreatePostRequest>({
-      query: (postData) => ({
+    // In postApi.ts
+    createPost: builder.mutation<Post, FormData>({
+      query: (formData) => ({
         url: "/",
         method: "POST",
-        body: postData,
+        body: formData,
       }),
       transformResponse: (response: SinglePostResponse) => response.data,
       invalidatesTags: ["Post"],
     }),
 
     // Update post
-    updatePost: builder.mutation<Post, { id: string; data: UpdatePostRequest }>({
-      query: ({ id, data }) => ({
-        url: `/${id}`,
-        method: "PATCH",
-        body: data,
-      }),
-      transformResponse: (response: SinglePostResponse) => response.data,
-      invalidatesTags: ["Post"],
-    }),
+    updatePost: builder.mutation<Post, { id: string; data: UpdatePostRequest }>(
+      {
+        query: ({ id, data }) => ({
+          url: `/${id}`,
+          method: "PATCH",
+          body: data,
+        }),
+        transformResponse: (response: SinglePostResponse) => response.data,
+        invalidatesTags: ["Post"],
+      }
+    ),
 
     // Delete post
     deletePost: builder.mutation<void, string>({
