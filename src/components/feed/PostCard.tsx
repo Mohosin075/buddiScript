@@ -203,8 +203,9 @@ const PostCard = ({ post }: PostCardProps) => {
             <p className="font-semibold mb-2 text-lg">{post.content}</p>
 
             {/* Show first media item if exists */}
+            {/* IMAGE */}
             {firstMedia && firstMedia.type === "image" && (
-              <div className="relative w-full h-[400px] bg-black">
+              <div className="relative w-full h-[440px] bg-black overflow-hidden">
                 <img
                   src={firstMedia.url}
                   alt="Post content"
@@ -214,22 +215,20 @@ const PostCard = ({ post }: PostCardProps) => {
               </div>
             )}
 
-            {/* Show video if first media is video */}
+            {/* VIDEO / REELS */}
             {firstMedia && firstMedia.type === "video" && (
-              <div className="w-full -mx-4">
+              <div className="relative w-full h-[440px] bg-black overflow-hidden">
                 <video
                   controls
-                  autoPlay={true}
+                  autoPlay
                   muted
-                  className="w-full max-h-[400px] object-cover rounded-none"
+                  className="absolute inset-0 w-full h-full object-contain object-center"
                   poster={
-                    firstMedia.thumbnail ? `${firstMedia.thumbnail}` : undefined
+                    firstMedia.thumbnail ? firstMedia.thumbnail : undefined
                   }
                 >
-                  {/* Add multiple quality sources if available */}
-                  <source src={`${firstMedia.url}`} type="video/mp4" />
-                  <source src={`${firstMedia.url}`} type="video/mp4" />
-                  <source src={`${firstMedia.url}`} type="video/webm" />
+                  <source src={firstMedia.url} type="video/mp4" />
+                  <source src={firstMedia.url} type="video/webm" />
                   Your browser does not support the video tag.
                 </video>
               </div>
