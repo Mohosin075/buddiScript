@@ -25,7 +25,6 @@ import {
 import { formatDistanceToNow } from "date-fns";
 import { useEffect, useState } from "react";
 import type { Post } from "@/types/postApi.interface";
-import { MEDIA_URL } from "@/lib/Base_URL";
 import {
   useToggleLikeMutation,
   useCheckLikeStatusQuery,
@@ -207,7 +206,7 @@ const PostCard = ({ post }: PostCardProps) => {
             {firstMedia && firstMedia.type === "image" && (
               <div className="flex justify-center w-full">
                 <img
-                  src={`${MEDIA_URL}${firstMedia.url}`}
+                  src={`${firstMedia.url}`}
                   alt="Post content"
                   className="max-w-full max-h-[440px] object-contain rounded-lg border"
                 />
@@ -223,15 +222,10 @@ const PostCard = ({ post }: PostCardProps) => {
                   muted
                   className="max-w-full max-h-96 object-contain rounded-lg border"
                   poster={
-                    firstMedia.thumbnail
-                      ? `${MEDIA_URL}${firstMedia.thumbnail}`
-                      : undefined
+                    firstMedia.thumbnail ? `${firstMedia.thumbnail}` : undefined
                   }
                 >
-                  <source
-                    src={`${MEDIA_URL}${firstMedia.url}`}
-                    type="video/mp4"
-                  />
+                  <source src={`${firstMedia.url}`} type="video/mp4" />
                   Your browser does not support the video tag.
                 </video>
               </div>
@@ -304,7 +298,7 @@ const PostCard = ({ post }: PostCardProps) => {
               className="flex-1 text-muted-foreground hover:text-primary hover:bg-primary/5 rounded-none"
             >
               <MessageCircle className="h-4 w-4 mr-2" />
-              Comment
+              <span className="hidden md:block">Comment</span>
             </Button>
             <Button
               variant="ghost"
@@ -312,7 +306,7 @@ const PostCard = ({ post }: PostCardProps) => {
               className="flex-1 text-muted-foreground hover:text-primary hover:bg-primary/5 rounded-none"
             >
               <Share2 className="h-4 w-4 mr-2" />
-              Share
+              <span className="">Share</span>
             </Button>
           </div>
 

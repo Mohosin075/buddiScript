@@ -5,10 +5,12 @@ import { postApi } from "./api/postApi";
 import { likeApi } from "./api/likeApi"; // Import the likeApi
 import authReducer from "./slices/authSlice";
 import { commentApi } from "./api/commentApi";
+import { authApi } from "./api/authApi";
 
 export const store = configureStore({
   reducer: {
     auth: authReducer,
+    [authApi.reducerPath]: authApi.reducer,
     [userApi.reducerPath]: userApi.reducer,
     [postApi.reducerPath]: postApi.reducer,
     [likeApi.reducerPath]: likeApi.reducer, // Add likeApi reducer
@@ -16,6 +18,7 @@ export const store = configureStore({
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware()
+      .concat(authApi.middleware)
       .concat(userApi.middleware)
       .concat(commentApi.middleware)
       .concat(postApi.middleware)

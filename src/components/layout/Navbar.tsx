@@ -58,7 +58,7 @@ export function Navbar() {
     localStorage.removeItem("userData");
 
     toast.info("You have been logged out successfully");
-    navigate("/");
+    navigate("/auth/login");
   };
 
   const handleSearch = (e: React.FormEvent) => {

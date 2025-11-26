@@ -46,8 +46,8 @@ const CreatePost = () => {
       return;
     }
 
-    if (file.size > 20 * 1024 * 1024) {
-      toast.error(`Video ${file.name} is too large. Maximum size is 20MB`);
+    if (file.size > 50 * 1024 * 1024) {
+      toast.error(`Video ${file.name} is too large. Maximum size is 50MB`);
       return;
     }
 
@@ -70,16 +70,11 @@ const CreatePost = () => {
 
   const handleSubmit = async () => {
     try {
-      // Validation: require either text or media; if media present, require text
+      // Validation: require either text or media
       if (!content.trim() && !selectedMedia) {
         toast.error("Please write something or add media to post");
         return;
       }
-
-      // if (selectedMedia && !content.trim()) {
-      //   toast.error("Please add a caption/text when posting media");
-      //   return;
-      // }
 
       const formData = new FormData();
       const postData = {
@@ -90,11 +85,20 @@ const CreatePost = () => {
       formData.append("data", JSON.stringify(postData));
 
       if (selectedMedia) {
+        // Use the correct field name based on media type
+        // Backend expects "image" for images and "media" for videos
         if (mediaType === "image") {
-          formData.append("images", selectedMedia);
+          formData.append("image", selectedMedia);
         } else if (mediaType === "video") {
           formData.append("media", selectedMedia);
         }
+      }
+
+      // Debugging aid
+      if (process.env.NODE_ENV === "development") {
+        console.log("Creating post with FormData entries:", [
+          ...formData.entries(),
+        ]);
       }
 
       // Use the Redux mutation to create the post
