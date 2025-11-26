@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Calendar, Camera, FileText, Send, Video, X } from "lucide-react";
@@ -24,8 +25,9 @@ const CreatePost = () => {
       return;
     }
 
-    if (file.size > 20 * 1024 * 1024) {
-      toast.error(`Image ${file.name} is too large. Maximum size is 20MB`);
+    // Match backend limit of 30MB
+    if (file.size > 30 * 1024 * 1024) {
+      toast.error(`Image ${file.name} is too large. Maximum size is 30MB`);
       return;
     }
 
@@ -46,8 +48,9 @@ const CreatePost = () => {
       return;
     }
 
-    if (file.size > 50 * 1024 * 1024) {
-      toast.error(`Video ${file.name} is too large. Maximum size is 50MB`);
+    // Match backend limit of 30MB
+    if (file.size > 30 * 1024 * 1024) {
+      toast.error(`Video ${file.name} is too large. Maximum size is 30MB`);
       return;
     }
 
@@ -82,27 +85,32 @@ const CreatePost = () => {
         privacy: "public",
         tags: [],
       };
+
+      // Append data as JSON string - this matches your backend expectation
       formData.append("data", JSON.stringify(postData));
 
       if (selectedMedia) {
-        // Use the correct field name based on media type
-        // Backend expects "image" for images and "media" for videos
+        // Use the correct field names that match your backend multer configuration
         if (mediaType === "image") {
-          formData.append("image", selectedMedia);
+          formData.append("image", selectedMedia); // Backend expects "image" field
         } else if (mediaType === "video") {
-          formData.append("media", selectedMedia);
+          formData.append("media", selectedMedia); // Backend expects "media" field
         }
       }
 
-      // Debugging aid
-      if (process.env.NODE_ENV === "development") {
-        console.log("Creating post with FormData entries:", [
-          ...formData.entries(),
-        ]);
+      // Debugging - log FormData contents
+      console.log("FormData entries:");
+      for (const [key, value] of formData.entries()) {
+        if (value instanceof File) {
+          console.log(`${key}:`, value.name, value.type, value.size, "bytes");
+        } else {
+          console.log(`${key}:`, value);
+        }
       }
 
       // Use the Redux mutation to create the post
-      await createPost(formData).unwrap();
+      const result = await createPost(formData).unwrap();
+      console.log("Post created successfully:", result);
 
       // Clear form and revoke preview URL
       setContent("");
@@ -117,9 +125,19 @@ const CreatePost = () => {
 
       // Notify other parts of app if needed
       window.dispatchEvent(new Event("postCreated"));
-    } catch (error) {
+    } catch (error: any) {
       console.error("Failed to create post:", error);
-      toast.error("Failed to create post. Please try again.");
+
+      // More specific error handling based on backend response
+      if (error?.data?.message) {
+        toast.error(`Failed to create post: ${error.data.message}`);
+      } else if (error?.status === "FETCH_ERROR") {
+        toast.error("Cannot connect to server. Please check your connection.");
+      } else if (error?.status === 413) {
+        toast.error("File too large. Maximum size is 30MB.");
+      } else {
+        toast.error("Failed to create post. Please try again.");
+      }
     }
   };
 
@@ -128,26 +146,31 @@ const CreatePost = () => {
       icon: <Camera className="w-4 h-4" />,
       label: "Photo",
       onClick: () => imageInputRef.current?.click(),
+      disabled: isLoading,
     },
     {
       icon: <Video className="w-4 h-4" />,
       label: "Video",
       onClick: () => videoInputRef.current?.click(),
+      disabled: isLoading,
     },
     {
       icon: <Calendar className="w-4 h-4" />,
       label: "Event",
       onClick: () => toast.info("Event feature coming soon"),
+      disabled: isLoading,
     },
     {
       icon: <FileText className="w-4 h-4" />,
       label: "Article",
       onClick: () => toast.info("Article feature coming soon"),
+      disabled: isLoading,
     },
     {
       icon: <Send className="w-4 h-4" />,
       label: "Post",
       onClick: handleSubmit,
+      disabled: isLoading || (!content.trim() && !selectedMedia),
     },
   ];
 
@@ -160,6 +183,7 @@ const CreatePost = () => {
         onChange={handleImageSelect}
         accept="image/*"
         className="hidden"
+        disabled={isLoading}
       />
       <input
         type="file"
@@ -167,6 +191,7 @@ const CreatePost = () => {
         onChange={handleVideoSelect}
         accept="video/*"
         className="hidden"
+        disabled={isLoading}
       />
 
       <Card className="mb-6 bg-card">
@@ -220,6 +245,7 @@ const CreatePost = () => {
                     type="button"
                     onClick={removeMedia}
                     className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full p-1 w-6 h-6 flex items-center justify-center text-xs"
+                    disabled={isLoading}
                   >
                     <X className="w-3 h-3" />
                   </button>
@@ -230,20 +256,24 @@ const CreatePost = () => {
 
           <div className="flex justify-between w-full text-center items-center p-2 bg-primary-tiny-2 rounded-lg">
             {actionItems.map((item) => (
-              <div
+              <button
                 key={item.label}
-                className={`text-muted-foreground py-2 w-full hover:text-primary transition-colors duration-200 cursor-pointer ${
+                className={`flex items-center justify-center text-center py-2 w-full transition-colors duration-200 ${
                   item.label === "Post"
-                    ? "border-r-0 bg-primary hover:bg-primary text-white hover:text-white rounded-2xl"
-                    : ""
-                } ${isLoading ? "opacity-50 cursor-not-allowed" : ""}`}
-                onClick={isLoading ? undefined : item.onClick}
+                    ? "bg-primary hover:bg-primary text-white hover:text-white rounded-2xl"
+                    : "text-muted-foreground hover:text-primary"
+                } ${
+                  item.disabled
+                    ? "opacity-50 cursor-not-allowed"
+                    : "cursor-pointer"
+                }`}
+                onClick={item.disabled ? undefined : item.onClick}
+                disabled={item.disabled}
+                type="button"
               >
-                <div className="flex items-center justify-center text-center">
-                  <span className="mr-2">{item.icon}</span>
-                  <span className="hidden md:block">{item.label}</span>
-                </div>
-              </div>
+                <span className="mr-2">{item.icon}</span>
+                <span className="hidden md:block">{item.label}</span>
+              </button>
             ))}
           </div>
         </CardContent>
