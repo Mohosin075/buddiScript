@@ -248,22 +248,6 @@ const PostCard = ({ post }: PostCardProps) => {
                 />
                 <AvatarFallback>CN</AvatarFallback>
               </Avatar>
-              <span className="hidden md:block">
-                <Avatar>
-                  <AvatarImage
-                    src="https://github.com/maxleiter.png"
-                    alt="@maxleiter"
-                  />
-                  <AvatarFallback>LR</AvatarFallback>
-                </Avatar>
-                <Avatar>
-                  <AvatarImage
-                    src="https://github.com/evilrabbit.png"
-                    alt="@evilrabbit"
-                  />
-                  <AvatarFallback>ER</AvatarFallback>
-                </Avatar>
-              </span>
               <Avatar className="">
                 <div className="flex justify-center items-center bg-primary text-background">
                   <p>10+</p>
