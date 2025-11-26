@@ -204,28 +204,32 @@ const PostCard = ({ post }: PostCardProps) => {
 
             {/* Show first media item if exists */}
             {firstMedia && firstMedia.type === "image" && (
-              <div className="flex justify-center w-full">
+              <div className="relative w-full h-[400px] bg-black">
                 <img
-                  src={`${firstMedia.url}`}
+                  src={firstMedia.url}
                   alt="Post content"
-                  className="max-w-full max-h-[440px] object-contain rounded-lg border"
+                  className="absolute inset-0 w-full h-full object-contain object-center"
+                  loading="eager"
                 />
               </div>
             )}
 
             {/* Show video if first media is video */}
             {firstMedia && firstMedia.type === "video" && (
-              <div className="flex justify-center">
+              <div className="w-full -mx-4">
                 <video
                   controls
                   autoPlay={true}
                   muted
-                  className="max-w-full max-h-96 object-contain rounded-lg border"
+                  className="w-full max-h-[400px] object-cover rounded-none"
                   poster={
                     firstMedia.thumbnail ? `${firstMedia.thumbnail}` : undefined
                   }
                 >
+                  {/* Add multiple quality sources if available */}
                   <source src={`${firstMedia.url}`} type="video/mp4" />
+                  <source src={`${firstMedia.url}`} type="video/mp4" />
+                  <source src={`${firstMedia.url}`} type="video/webm" />
                   Your browser does not support the video tag.
                 </video>
               </div>
