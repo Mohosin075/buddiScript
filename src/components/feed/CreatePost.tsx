@@ -73,7 +73,6 @@ const CreatePost = () => {
 
   const handleSubmit = async () => {
     try {
-      // Validation: require either text or media
       if (!content.trim() && !selectedMedia) {
         toast.error("Please write something or add media to post");
         return;
@@ -86,49 +85,56 @@ const CreatePost = () => {
         tags: [],
       };
 
-      // Append data as JSON string - this matches your backend expectation
       formData.append("data", JSON.stringify(postData));
 
       if (selectedMedia) {
-        // Use the correct field names that match your backend multer configuration
+        // Use consistent field names - backend expects "image" for images, "media" for videos
         if (mediaType === "image") {
-          formData.append("image", selectedMedia); // Backend expects "image" field
+          formData.append("image", selectedMedia);
         } else if (mediaType === "video") {
-          formData.append("media", selectedMedia); // Backend expects "media" field
+          formData.append("media", selectedMedia); // This should match backend Multer config
         }
       }
 
-      // Debugging - log FormData contents
-      console.log("FormData entries:");
+      // Debug logging
+      console.log("Submitting form data:");
+      console.log("Media type:", mediaType);
+      console.log("File name:", selectedMedia?.name);
+      console.log("File size:", selectedMedia?.size);
+
       for (const [key, value] of formData.entries()) {
         if (value instanceof File) {
-          console.log(`${key}:`, value.name, value.type, value.size, "bytes");
+          console.log(
+            `File field [${key}]:`,
+            value.name,
+            value.type,
+            value.size
+          );
         } else {
-          console.log(`${key}:`, value);
+          console.log(`Data field [${key}]:`, value);
         }
       }
 
-      // Use the Redux mutation to create the post
       const result = await createPost(formData).unwrap();
       console.log("Post created successfully:", result);
 
-      // Clear form and revoke preview URL
+      // Reset form
       setContent("");
-      if (mediaPreview) {
-        URL.revokeObjectURL(mediaPreview);
-      }
+      if (mediaPreview) URL.revokeObjectURL(mediaPreview);
       setSelectedMedia(null);
       setMediaPreview(null);
       setMediaType(null);
 
       toast.success("Post created successfully!");
-
-      // Notify other parts of app if needed
       window.dispatchEvent(new Event("postCreated"));
     } catch (error: any) {
       console.error("Failed to create post:", error);
 
-      // More specific error handling based on backend response
+      // Enhanced error logging
+      if (error?.data) {
+        console.error("Backend error details:", error.data);
+      }
+
       if (error?.data?.message) {
         toast.error(`Failed to create post: ${error.data.message}`);
       } else if (error?.status === "FETCH_ERROR") {
