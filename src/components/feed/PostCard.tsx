@@ -362,16 +362,17 @@ const PostCard = ({ post }: PostCardProps) => {
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex-1">
-                      <div className="bg-muted/50 rounded-lg p-3">
+                      <div className="bg-muted/50 rounded-lg p-3 max-h-48 overflow-y-auto ">
                         <div className="font-semibold text-sm">
                           {comment.userId.firstName && comment.userId.lastName
                             ? `${comment.userId.firstName} ${comment.userId.lastName}`
                             : `User ${comment.userId._id.slice(-6)}`}
                         </div>
-                        <p className="text-sm mt-1 text-muted-foreground">
+                        <p className="text-sm mt-1 text-muted-foreground wrap-break-words break-all whitespace-pre-wrap">
                           {comment.content}
                         </p>
                       </div>
+
                       {/* Rest of comment UI */}
                     </div>
                   </div>
