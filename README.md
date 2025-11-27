@@ -1,107 +1,109 @@
-# **BuddiScript Frontend**
+# BuddiScript — Frontend
 
-A polished, scalable frontend stack tailored for modern social/content-driven applications. Built with **React**, **TypeScript**, **Vite**, **Redux Toolkit**, and **TailwindCSS**, the BuddiScript Frontend is engineered for high performance, modularity, and seamless integration with the BuddiScript backend.
-
----
-
-## 🎯 **Overview**
-
-The BuddiScript Frontend delivers a production-grade UI layer featuring authentication flows, profile management, content rendering, real-time socket connectivity, and responsive layouts. Designed to plug directly into the BuddiScript server.
+Welcome to the BuddiScript frontend repository: a modular, production-ready React + TypeScript application designed to work with the BuddiScript API. This project prioritizes scalability, developer experience, and maintainable architecture by leveraging Vite, Redux Toolkit, RTK Query, TailwindCSS, and modern React practices.
 
 ---
 
-## ⚙️ **Core Features**
+## 🎯 Overview
 
-* 🔐 **Auth Flows**: Login, Signup, OTP Verification, Google OAuth, Password Reset
-* 👤 **User Profile Management** with image uploads
-* 📝 **Content Rendering** for posts, comments, likes, shares
-* 📡 **Real-Time Socket.IO Events**
-* 🧭 **Dynamic Routing** via React Router
-* 🎛 **State Management** with Redux Toolkit + RTK Query
-* 🎨 **TailwindCSS** for styling
-* 🧩 **Modular Folder Structure** following scalable app patterns
-* 🛠️ **Global Interceptors** for protected routes
+The frontend handles all user interactions, authentication flows, content creation and consumption (posts, comments, likes), and real-time updates. It is built to connect to a BuddiScript backend (local or deployed) through a reusable API module and uses Socket.IO for live updates.
 
 ---
 
-## 🧰 **Tech Stack**
+## ⚙️ Core Features
 
-* **React** + **TypeScript**
-* **Vite**
-* **Redux Toolkit**, **RTK Query**
-* **React Router DOM**
-* **TailwindCSS**
-* **Axios** (API layer)
-* **Socket.IO Client**
-* **React Hook Form** + Zod (optional)
-* **Sonner / Toast** for notifications
+- 🔐 Authentication flows: Login, Signup, OTP verification, Google OAuth, and Password Reset
+- 👤 User profiles with image uploads and profile settings
+- 📝 Content creation & consumption: posts, comments, likes, and shares
+- 📡 Real-time updates & notifications via Socket.IO
+- 🧭 Dynamic routing using React Router DOM
+- 🎛 State management with Redux Toolkit and RTK Query
+- 🎨 Styling with TailwindCSS and reusable UI components
+- 🧩 A modular folder structure and reusable utilities
+- 🛠 Global API layer with Axios, token management, and interceptors
 
 ---
 
-## 🗂️ **Recommended Folder Structure**
+## 🧰 Tech Stack
+
+- React + TypeScript
+- Vite
+- Redux Toolkit + RTK Query
+- React Router DOM
+- TailwindCSS
+- Axios for the API layer
+- Socket.IO Client for real-time features
+- React Hook Form + Zod (optional for validations)
+- Sonner / Toast for notification UI
+
+---
+
+## 🗂️ Repo structure
+
+Below is a simplified view of the main project folders (complete structure under `src/`):
 
 ```
 src/
-  assets/
-  components/
-  hooks/
-  layouts/
-  pages/
-  redux/
-    slices/
-    store.ts
-  routes/
-  services/
-  utils/
+  assets/           # static assets
+  components/       # shared components (ui + feature)
+  hooks/            # shared hooks
+  layout/           # layout components
+  pages/            # top-level routes (auth, dashboard, posts etc.)
+  redux/            # store, slices, persistence
+  routes/           # router setup + protection logic
+  lib/              # small utilities and config (axios, base URLs, tokens)
+  utils/            # small helpers
+  main.tsx
 ```
 
 ---
 
-## 📦 **Requirements**
+## 📦 Requirements
 
-* Node.js 18+
-* Vite-compatible environment
-* BuddiScript backend running locally or remote
+- Node.js 18+ (or latest LTS)
+- A running BuddiScript backend (or use a remote backend)
+- A browser for frontend development
 
 ---
 
-## 🚀 **Getting Started**
+## 🚀 Getting started (quick)
 
-### 1️⃣ Install Dependencies
+1. Install dependencies:
 
-```bash
+```powershell
 npm install
 ```
 
-### 2️⃣ Create `.env`
-
-Your `.env` should include the following:
+2. Create a `.env` file in the root (example variables below):
 
 ```env
 VITE_API_BASE_URL=http://localhost:5000/api/v1
 VITE_SOCKET_URL=http://localhost:5000
-
-# Google OAuth (frontend web client)
 VITE_GOOGLE_CLIENT_ID=your_google_client_id
 ```
+
+Notes:
+
+- Use `VITE_API_BASE_URL` for the API base URL (backend default: :5000/api/v1)
+- Ensure `VITE_SOCKET_URL` is the Socket server URL (use same host as API for local dev)
 
 > **Note:** The frontend URL must be added under **Authorized JavaScript Origins** in the Google OAuth console.
 
 ---
 
-## 🧪 **Scripts**
+## 🧪 Scripts
 
-* `npm run dev` — Development mode
-* `npm run build` — Build for production
-* `npm run preview` — Preview production build locally
-* `npm run lint` — ESLint check
-* `npm run format` — Format with Prettier
+- `npm run dev` - Start the dev server
+- `npm run build` - Build production assets
+- `npm run preview` - Preview a production build
+- `npm run lint` - Run ESLint
+- `npm run format` - Format with Prettier
 
 ---
 
-## 🧭 **Routing Overview**
+## 🧭 Routing overview
 
-Example routes:
+Example page routes:
 
 ```
 /
@@ -114,59 +116,55 @@ Example routes:
 /posts/:id
 ```
 
----
-
-## 🔐 **Authentication Flow**
-
-1. **Login / Signup → Backend Auth API**
-2. Server returns **accessToken + refreshToken**
-3. Tokens stored in **httpOnly cookies** or **local storage** (based on setup)
-4. Protected routes validated via Axios interceptors
+Protected routes (dashboard, profile) are enforced using HOCs or route guards in `src/routes/*`.
 
 ---
 
-## 📡 **Socket.IO Integration**
+## 🔐 Authentication flow
+
+1. Client → Backend auth API (Login/Signup/OTP)
+2. Server returns `accessToken` and `refreshToken` in a secure mechanism (HTTP-only cookies or tokens)
+3. The Axios instance attaches tokens for protected requests
+4. Token refresh is handled by interceptors upon 401/expired token responses
+
+Security highlights:
+
+- Prefer HTTP-only cookies in production to protect from XSS
+- Use refresh tokens and token rotate patterns if supported by the backend
+
+---
+
+## 📡 Socket.IO integration
+
+Socket is configured through `VITE_SOCKET_URL` and authenticated via the same access token (usually as a bearer token in the `auth` setup). Socket.io events are used for real-time notifications and updates in-app.
+
+Example:
 
 ```ts
 const socket = io(import.meta.env.VITE_SOCKET_URL, {
-  auth: {
-    token: `Bearer ${token}`,
-  },
+  auth: { token: `Bearer ${token}` },
 });
 ```
 
-Used for:
+---
 
-* Live notifications
-* Real-time updates
+## 🧩 State management
+
+Redux store is configured with slices for auth, user, posts, comments, etc., and RTK Query services for data fetching (API endpoints). See `src/redux/` for more details.
 
 ---
 
-## 🧩 **State Management (Redux Toolkit)**
+## 🎨 Styling
 
-Configured in `redux/store.ts` with:
-
-* Auth slice
-* User slice
-* Post slice
-* Notification slice
-* RTK Query API services
+The project uses TailwindCSS for responsive utility-driven styling and a shared UI component library in `src/components/ui/`.
 
 ---
 
-## 🎨 **Styling (TailwindCSS)**
+## 🔗 API integration
 
-Responsive UI with:
+The global Axios instance and interceptors are configured under `src/lib/` (or `src/services`). It handles attaching tokens to requests, refreshing tokens, and automatic logout for invalid sessions.
 
-* Utility classes
-* Custom themes
-* Reusable components via shadcn or custom UI kit
-
----
-
-## 🔗 **API Layer Using Axios**
-
-Global Axios instance:
+Example concept:
 
 ```ts
 axios.create({
@@ -175,45 +173,64 @@ axios.create({
 });
 ```
 
-Interceptors:
-
-* Add tokens
-* Handle expiration
-* Auto-refresh logic
-
 ---
 
-## 🧑‍💻 **Deployment**
+## 🚀 Deployment
 
-### Vercel / Netlify / Firebase Hosting
+### Vercel / Netlify
 
-Simply run:
-
-```bash
-npm run build
-```
-
-Then deploy the `dist/` folder.
+1. `npm run build`
+2. Deploy `dist/` or connect to repo in Vercel and set environment variables
 
 ### Nginx
 
-Serve from `/usr/share/nginx/html`.
+1. Build with `npm run build`
+2. Copy the `dist` folder to the server's web root (e.g., `/usr/share/nginx/html`)
+3. Configure `try_files $uri $uri/ /index.html` for SPA routing
 
 ---
 
-## 📁 **Key Frontend Files**
+## 📁 Important files
 
-* `src/main.tsx` — App bootstrap
-* `src/routes/index.tsx` — Router setup
-* `src/redux/store.ts` — Global state
-* `src/services/api.ts` — API config
-* `src/components/AuthProvider` — Token/session management
+- `src/main.tsx` — Bootstraps the React app
+- `src/routes/index.tsx` — Router & route guards
+- `src/redux/store.ts` — Redux store configuration
+- `src/redux/api` — RTK Query services
+- `src/lib/` — API base URL, token helpers, axios instance
+- `src/components/AuthProvider.tsx` — Authentication wrapper
+- `src/layout/` — layouts used across pages
+- `src/pages/` — top-level pages
 
 ---
 
-## 📜 **License**
+---
 
-**ISC License**
+---
+
+## ✅ What we added
+
+- A clearer, more detailed README with all the key sections developers expect (Getting Started, environment variables, folder structure, architecture, routing, auth, socket config, and deployment).
+- Next steps: See the `docs` folder which contains more technical details and contribution guidelines.
+
+---
+
+If you want this turned into a PDF, DOCX or a fully styled HTML documentation site, I can generate that as well.
+
+---
+
+## 📚 Additional documentation
+
+More in-depth docs are available in the `docs/` folder:
+
+- `docs/ARCHITECTURE.md` — Architecture, data flow, and design decisions
+- `docs/COMPONENTS.md` — A small components catalog and locations
+- `docs/DEPLOYMENT.md` — Deployment instructions for Vercel, Netlify, Nginx, Docker
+- `docs/CONTRIBUTING.md` — How to contribute and the repository workflow
+- `docs/ENVIRONMENT.md` — Environment variables and their definitions
+
+---
+
+Happy hacking! ⚡
 
 ---
 

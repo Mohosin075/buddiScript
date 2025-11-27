@@ -12,6 +12,9 @@ import AdminRoute from "./AdminRoute";
 import PrivateRoute from "./PrivateRoute";
 import NotFoundPage from "@/pages/NotFoundPage";
 import ProfilePage from "@/pages/dashboard/user/Profile";
+import FriendPage from "@/pages/Friend";
+import NotificationPage from "@/pages/Notification";
+import MessagePage from "@/pages/Message";
 import ResetPasswordPage from "@/pages/auth/ResetPassword";
 
 export const router = createBrowserRouter([
@@ -38,6 +41,30 @@ export const router = createBrowserRouter([
           </PrivateRoute>
         ),
         path: "/profile",
+      },
+      {
+        Component: () => (
+          <PrivateRoute>
+            <FriendPage />
+          </PrivateRoute>
+        ),
+        path: "/friend",
+      },
+      {
+        Component: () => (
+          <PrivateRoute>
+            <NotificationPage />
+          </PrivateRoute>
+        ),
+        path: "/notification",
+      },
+      {
+        Component: () => (
+          <PrivateRoute>
+            <MessagePage />
+          </PrivateRoute>
+        ),
+        path: "/message",
       },
     ],
   },
