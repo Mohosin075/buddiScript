@@ -22,31 +22,55 @@ import {
   Search,
   X,
 } from "lucide-react";
-import { useState } from "react";
+import React, { useCallback, useState } from "react";
 import { useDispatch } from "react-redux";
+import { useAppSelector } from "@/redux/hooks";
 import { Link, NavLink, useNavigate } from "react-router";
 import { toast } from "sonner";
 import { navLinks } from "@/lib/navigation-data";
 import { Navigation } from "../utils/Navigation";
+import Skeleton from "../shared/Skeleton";
 
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const [searchText, setSearchText] = useState("");
   // const isUser = localStorage.getItem("userRole");
-  const { data } = useGetProfileQuery();
+  // Read auth info from redux for more consistent behavior at app scale
+  const {
+    hydrationComplete,
+    token: reduxToken,
+    isAuthenticated: authIsAuth,
+  } = useAppSelector((s) => s.auth);
+
+  const {
+    data,
+    isLoading: profileLoading,
+    isFetching: profileFetching,
+  } = useGetProfileQuery(undefined, {
+    // Skip fetching until hydration completes or token is available (avoid redundant calls on SSR or cold clients)
+    skip: !hydrationComplete && !reduxToken,
+    refetchOnMountOrArgChange: true,
+    refetchOnReconnect: true,
+    refetchOnFocus: true,
+  });
+
   const user = data?.data;
 
-  console.log({ user });
-
+  // fall back to cookies/localStorage if redux isn't populated yet
   const isAuthenticated =
-    Cookie.get("isAuthenticated") || localStorage.getItem("isAuthenticated");
+    authIsAuth ||
+    Cookie.get("isAuthenticated") ||
+    localStorage.getItem("isAuthenticated");
 
-  const userRole = Cookie.get("userRole") || localStorage.getItem("userRole");
+  const userRole =
+    (user?.role as string) ||
+    Cookie.get("userRole") ||
+    localStorage.getItem("userRole");
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  const handleLogout = () => {
+  const handleLogout = useCallback(() => {
     dispatch(logout());
     Cookie.remove("token");
     Cookie.remove("userRole");
@@ -59,7 +83,7 @@ export function Navbar() {
 
     toast.info("You have been logged out successfully");
     navigate("/auth/login");
-  };
+  }, [dispatch, navigate]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -67,9 +91,9 @@ export function Navbar() {
     console.log("Searching for:", searchText);
   };
 
-  const clearInput = () => {
+  const clearInput = useCallback(() => {
     setSearchText("");
-  };
+  }, []);
 
   return (
     <>
@@ -141,7 +165,7 @@ export function Navbar() {
 
             {/* Desktop Auth Section */}
             <div className="hidden lg:flex items-center space-x-1">
-              {isAuthenticated === "true" && user ? (
+              {isAuthenticated && user ? (
                 <>
                   <Avatar className="h-8 w-8 ring-2! ring-primary-tiny">
                     <AvatarImage
@@ -159,9 +183,13 @@ export function Navbar() {
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-                    <span className="font-medium capitalize">
-                      {user.name || "User"}
-                    </span>
+                    {profileLoading || profileFetching ? (
+                      <Skeleton className="h-4 w-28 rounded" as="span" />
+                    ) : (
+                      <span className="font-medium capitalize">
+                        {user.name || "User"}
+                      </span>
+                    )}
                   </div>
 
                   <DropdownMenu>
@@ -197,12 +225,23 @@ export function Navbar() {
                             </AvatarFallback>
                           </Avatar>
                           <div className="flex flex-col">
-                            <p className="font-medium text-lg uppercase">
-                              {user?.name}
-                            </p>
-                            <p className="text-sm text-primary font-medium">
-                              <NavLink to={"/profile"}>View Profile</NavLink>
-                            </p>
+                            {profileLoading || profileFetching ? (
+                              <Skeleton
+                                className="h-5 w-32 rounded"
+                                as="span"
+                              />
+                            ) : (
+                              <>
+                                <p className="font-medium text-lg uppercase">
+                                  {user?.name}
+                                </p>
+                                <p className="text-sm text-primary font-medium">
+                                  <NavLink to={`/profile`}>
+                                    View Profile
+                                  </NavLink>
+                                </p>
+                              </>
+                            )}
                           </div>
                         </div>
                       </DropdownMenuLabel>
@@ -352,12 +391,18 @@ export function Navbar() {
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex flex-col">
-                      <p className="font-medium text-lg uppercase">
-                        {user?.name}
-                      </p>
-                      <p className="text-sm text-primary font-medium">
-                        <NavLink to={"/profile"}>View Profile</NavLink>
-                      </p>
+                      {profileLoading || profileFetching ? (
+                        <Skeleton className="h-5 w-32 rounded" as="span" />
+                      ) : (
+                        <>
+                          <p className="font-medium text-lg uppercase">
+                            {user?.name}
+                          </p>
+                          <p className="text-sm text-primary font-medium">
+                            <NavLink to={"/profile"}>View Profile</NavLink>
+                          </p>
+                        </>
+                      )}
                     </div>
                   </div>
                 )}
