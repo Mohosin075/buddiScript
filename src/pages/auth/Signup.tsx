@@ -22,6 +22,7 @@ import type React from "react";
 import { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
 import { Link, useNavigate } from "react-router";
+import PageContainer from "@/components/shared/PageContainer";
 import { toast } from "sonner";
 
 export default function SignupPage() {
@@ -182,7 +183,7 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-muted flex items-center justify-center p-4">
+    <PageContainer centered>
       <HelmetTitle title="Signup" />
       <div className="w-full max-w-9xl flex flex-col md:flex-row items-center justify-center gap-5 md:gap-0">
         {/* Left Side - Image */}
@@ -348,6 +349,6 @@ export default function SignupPage() {
           </Card>
         </div>
       </div>
-    </div>
+    </PageContainer>
   );
 }

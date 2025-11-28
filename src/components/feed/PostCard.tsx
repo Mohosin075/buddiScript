@@ -3,6 +3,8 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import UserAvatar from "@/components/shared/UserAvatar";
+import CommentInput from "@/components/shared/CommentInput";
 import {
   Bell,
   Bookmark,
@@ -10,7 +12,6 @@ import {
   EyeOff,
   MessageCircle,
   MoreVertical,
-  Send,
   Share2,
   ThumbsUp,
   Trash2,
@@ -154,10 +155,11 @@ const PostCard = ({ post }: PostCardProps) => {
           {/* Header with user info and menu */}
           <div className="flex items-start justify-between mb-4">
             <div className="flex items-center space-x-3">
-              <Avatar className="h-10 w-10">
-                <AvatarImage src="https://cdn1.iconfinder.com/data/icons/user-pictures/100/male3-512.png" />
-                <AvatarFallback>KS</AvatarFallback>
-              </Avatar>
+              <UserAvatar
+                className="h-10 w-10"
+                src="https://cdn1.iconfinder.com/data/icons/user-pictures/100/male3-512.png"
+                fallback="KS"
+              />
               <div>
                 <div className="font-semibold">Karim Saif</div>
                 <div className="text-xs text-muted-foreground">
@@ -304,27 +306,14 @@ const PostCard = ({ post }: PostCardProps) => {
             {/* Write comment input */}
             <div className="space-y-3">
               <div className="flex items-center space-x-3">
-                <div className="flex-1 relative">
-                  <Avatar className="h-8 w-8 absolute left-3 top-1/2 transform -translate-y-1/2">
-                    <AvatarImage src="images/mini_pic.png" />
-                    <AvatarFallback>KS</AvatarFallback>
-                  </Avatar>
-                  <input
-                    type="text"
-                    placeholder="Write a comment..."
-                    className="w-full bg-input rounded-full px-4 py-2 pr-12 text-foreground placeholder:text-muted-foreground border-none outline-none focus:ring-2 focus:ring-primary focus:bg-white transition-colors duration-200 text-lg ps-14"
+                <div className="flex-1">
+                  <CommentInput
                     value={commentText}
-                    onChange={(e) => setCommentText(e.target.value)}
+                    onChange={(v) => setCommentText(v)}
                     onKeyPress={handleKeyPress}
+                    onSubmit={handleCreateComment}
                     disabled={isCreatingComment}
                   />
-                  <button
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-primary hover:text-primary/80 transition-colors cursor-pointer p-2"
-                    onClick={handleCreateComment}
-                    disabled={isCreatingComment || !commentText.trim()}
-                  >
-                    <Send className="h-6 w-6" />
-                  </button>
                 </div>
               </div>
             </div>
@@ -351,16 +340,13 @@ const PostCard = ({ post }: PostCardProps) => {
                 {/* Comments list */}
                 {displayedComments.map((comment) => (
                   <div key={comment._id} className="flex space-x-3">
-                    <Avatar className="h-10 w-10">
-                      <AvatarImage
-                        src={comment.userId.avatar}
-                        alt={`User ${comment.userId._id}`}
-                      />
-                      <AvatarFallback>
-                        {comment.userId.firstName?.[0] || "U"}
-                        {comment.userId.lastName?.[0] || "S"}
-                      </AvatarFallback>
-                    </Avatar>
+                    <UserAvatar
+                      className="h-10 w-10"
+                      src={comment.userId.avatar}
+                      fallback={`${comment.userId.firstName?.[0] || "U"}${
+                        comment.userId.lastName?.[0] || "S"
+                      }`}
+                    />
                     <div className="flex-1">
                       <div className="bg-muted/50 rounded-lg p-3 max-h-48 overflow-y-auto ">
                         <div className="font-semibold text-sm">

@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Card, CardContent } from "@/components/ui/card";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import UserAvatar from "@/components/shared/UserAvatar";
 import { Calendar, Camera, FileText, Send, Video, X } from "lucide-react";
 import { useState, useRef } from "react";
 import { useCreatePostMutation } from "@/redux/api/postApi";
@@ -203,17 +203,11 @@ const CreatePost = () => {
       <Card className="mb-6 bg-card">
         <CardContent className="p-4">
           <div className="flex items-start space-x-3 mb-4">
-            <Avatar className="h-10 w-10">
-              <AvatarFallback>
-                <div className="bg-primary rounded-full w-8 h-8 flex items-center justify-center border-1 border-background z-10">
-                  <img
-                    src="/images/mini_pic.png"
-                    alt="Profile"
-                    className="w-full h-full rounded-full object-cover"
-                  />
-                </div>
-              </AvatarFallback>
-            </Avatar>
+            <UserAvatar
+              className="h-10 w-10"
+              src="/images/mini_pic.png"
+              fallback="KS"
+            />
             <textarea
               rows={3}
               placeholder="Write something ... "

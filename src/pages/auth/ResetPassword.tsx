@@ -16,6 +16,7 @@ import { Eye, EyeOff, ArrowLeft, KeyRound, Mail } from "lucide-react";
 import type React from "react";
 import { useState, useEffect } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router";
+import PageContainer from "@/components/shared/PageContainer";
 import { toast } from "sonner";
 
 export default function ResetPasswordPage() {
@@ -114,7 +115,7 @@ export default function ResetPasswordPage() {
   }, [navigate, userEmail]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-muted flex items-center justify-center p-4">
+    <PageContainer centered>
       <HelmetTitle title="Reset Password" />
       <div className="w-full max-w-md space-y-6">
         {/* Logo/Brand */}
@@ -261,6 +262,6 @@ export default function ResetPasswordPage() {
           </CardContent>
         </Card>
       </div>
-    </div>
+    </PageContainer>
   );
 }

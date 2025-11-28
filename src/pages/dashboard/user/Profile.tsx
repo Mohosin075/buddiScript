@@ -13,6 +13,7 @@ import { format } from "date-fns";
 import { useChangePasswordMutation } from "@/redux/api/authApi";
 import { toast } from "sonner";
 import { useAppSelector } from "@/redux/hooks";
+import PageContainer from "@/components/shared/PageContainer";
 import ProfileOverviewSkeletons from "./skeletons/ProfileOverviewSkeletons";
 import ProfileSettingsSkeletons, {
   SettingsSkeletons,
@@ -80,7 +81,7 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="space-y-6 container mx-auto px-4 py-10">
+    <PageContainer className="py-10 space-y-6">
       {/* Page Header */}
       <div>
         <h1 className="text-3xl font-bold text-foreground">Profile Settings</h1>
@@ -118,7 +119,10 @@ export default function ProfilePage() {
                 <div className="mt-4">
                   <h3 className="text-lg font-semibold">{user?.name}</h3>
                   <p className="text-sm text-muted-foreground">{user?.email}</p>
-                  <Badge variant="secondary" className="mt-2 bg-primary text-background">
+                  <Badge
+                    variant="secondary"
+                    className="mt-2 bg-primary text-background"
+                  >
                     {user?.verified ? "Verified User" : "Unverified User"}
                   </Badge>
                 </div>
@@ -377,6 +381,6 @@ export default function ProfilePage() {
           </Card>
         </div>
       </div>
-    </div>
+    </PageContainer>
   );
 }

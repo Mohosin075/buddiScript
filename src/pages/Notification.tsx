@@ -1,7 +1,8 @@
 import HelmetTitle from "@/components/layout/HelmetTitle";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import UserAvatar from "@/components/shared/UserAvatar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import PageContainer from "@/components/shared/PageContainer";
 
 export default function NotificationPage() {
   const notifications = [
@@ -22,7 +23,7 @@ export default function NotificationPage() {
 
   return (
     <div className="bg-muted fixed top-16 left-0 right-0 bottom-0">
-      <div className="container mx-auto px-4 py-6 min-h-screen">
+      <PageContainer>
         <HelmetTitle title="Notification" />
 
         <Card>
@@ -35,12 +36,11 @@ export default function NotificationPage() {
                 key={n.id}
                 className="flex items-start space-x-3 p-3 rounded-lg hover:bg-accent cursor-pointer"
               >
-                <Avatar className="h-10 w-10">
-                  <AvatarImage src={`/images/avatar-${n.id}.png`} />
-                  <AvatarFallback>
-                    {n.title.split(" ")[0].slice(0, 1)}
-                  </AvatarFallback>
-                </Avatar>
+                <UserAvatar
+                  className="h-10 w-10"
+                  src={`/images/avatar-${n.id}.png`}
+                  fallback={n.title.split(" ")[0].slice(0, 1)}
+                />
                 <div className="flex-1">
                   <div className="flex items-center justify-between">
                     <p className="font-medium text-foreground">{n.title}</p>
@@ -58,7 +58,7 @@ export default function NotificationPage() {
             </p>
           </CardContent>
         </Card>
-      </div>
+      </PageContainer>
     </div>
   );
 }

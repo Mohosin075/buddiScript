@@ -16,6 +16,7 @@ import { Key } from "lucide-react";
 import type React from "react";
 import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router";
+import PageContainer from "@/components/shared/PageContainer";
 import { toast } from "sonner";
 
 export default function OtpPage() {
@@ -85,7 +86,7 @@ export default function OtpPage() {
   }, [navigate]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-muted flex items-center justify-center p-4">
+    <PageContainer centered>
       <HelmetTitle title="OTP Verification" />
       <div className="w-full max-w-md space-y-6">
         {/* Logo/Brand */}
@@ -148,6 +149,6 @@ export default function OtpPage() {
           </CardFooter>
         </Card>
       </div>
-    </div>
+    </PageContainer>
   );
 }

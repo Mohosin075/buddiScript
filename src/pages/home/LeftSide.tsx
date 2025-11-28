@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import UserAvatar from "@/components/shared/UserAvatar";
 
 import {
   BookOpen,
@@ -51,11 +51,7 @@ const LeftSide = () => {
               </div>
             ))}
           </div>
-        </CardContent>
-      </Card>
-      {/* Suggested People Card */}
-      <Card>
-        <CardContent className="p-4">
+
           <div className="flex justify-between mb-4">
             <h3 className="font-bold text-lg ">Suggested People</h3>
             {/* See All */}
@@ -87,10 +83,11 @@ const LeftSide = () => {
             ].map((person, index) => (
               <div key={index} className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
-                  <Avatar className="h-10 w-10">
-                    <AvatarImage src="images/img6.png" />
-                    <AvatarFallback>KS</AvatarFallback>
-                  </Avatar>
+                  <UserAvatar
+                    className="h-10 w-10"
+                    src="images/img6.png"
+                    fallback={person.initials}
+                  />
                   <div>
                     <div className="font-semibold">{person.name}</div>
                     <div className="text-sm text-muted-foreground">
@@ -133,7 +130,7 @@ const LeftSide = () => {
               },
             ].map((event, index) => (
               <div key={index} className="flex items-start justify-between">
-                <Card className="flex-1 py-0! px-0!">
+                <Card className="flex-1 p-0">
                   <CardContent className="px-0">
                     <img src="images/feed_event1.png" className="mb-5" alt="" />
                     <div className="p-4">

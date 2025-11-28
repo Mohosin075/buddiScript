@@ -2,6 +2,7 @@
 import type { ReactNode } from "react";
 import { Navigate } from "react-router";
 import { useState, useEffect } from "react";
+import Spinner from "@/components/shared/Spinner";
 import { useSelector } from "react-redux";
 import Cookies from "js-cookie";
 import type { RootState } from "@/redux/store";
@@ -81,7 +82,7 @@ const PrivateRoute = ({ children }: { children: ReactNode }) => {
   if (isChecking) {
     return (
       <div className="flex justify-center items-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+        <Spinner size={48} />
       </div>
     );
   }

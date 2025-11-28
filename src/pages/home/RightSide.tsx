@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import UserAvatar from "@/components/shared/UserAvatar";
 import { Search } from "lucide-react";
 const RightSide = () => {
   return (
@@ -15,10 +15,11 @@ const RightSide = () => {
             </Button>
           </div>
           <div className="flex items-center space-x-3 mb-3">
-            <Avatar className="h-10 w-10">
-              <AvatarImage src="images/img11.png" />
-              <AvatarFallback>KS</AvatarFallback>
-            </Avatar>
+            <UserAvatar
+              className="h-10 w-10"
+              src="images/img11.png"
+              fallback="KS"
+            />
             <div className="flex-1">
               <div className="font-semibold">Radowan SkillArena</div>
               <div className="text-xs text-muted-foreground">
@@ -99,10 +100,11 @@ const RightSide = () => {
                   key={index}
                   className="flex items-center space-x-3 p-3 rounded-lg hover:bg-accent cursor-pointer"
                 >
-                  <Avatar className="h-10 w-10">
-                    <AvatarImage src="images/img12.png" />
-                    <AvatarFallback>KS</AvatarFallback>
-                  </Avatar>
+                  <UserAvatar
+                    className="h-10 w-10"
+                    src="images/img12.png"
+                    fallback="KS"
+                  />
                   <div className="flex-1">
                     <div className="font-medium">{friend.name}</div>
                     {friend.role && (

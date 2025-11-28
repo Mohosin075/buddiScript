@@ -24,6 +24,7 @@ import HelmetTitle from "@/components/layout/HelmetTitle";
 
 import Cookies from "js-cookie";
 import { BASE_URL } from "@/lib/Base_URL";
+import PageContainer from "@/components/shared/PageContainer";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -203,7 +204,7 @@ export default function LoginPage() {
   }, [navigate]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-muted flex items-center justify-center p-4">
+    <PageContainer centered>
       <HelmetTitle title="Login" />
       <div className="w-full max-w-7xl flex flex-col md:flex-row items-center justify-center gap-5 md:gap-0">
         {/* Left Side - Image */}
@@ -326,6 +327,6 @@ export default function LoginPage() {
           </Card>
         </div>
       </div>
-    </div>
+    </PageContainer>
   );
 }

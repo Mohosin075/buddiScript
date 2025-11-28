@@ -1,12 +1,13 @@
 import HelmetTitle from "@/components/layout/HelmetTitle";
 import LeftSide from "./home/LeftSide";
 import RightSide from "./home/RightSide";
+import PageContainer from "@/components/shared/PageContainer";
 import Feed from "../components/feed/Feed";
 
 export default function HomePage() {
   return (
     <div className="bg-muted fixed top-16 left-0 right-0 bottom-0">
-      <div className="min-h-screen  container mx-auto px-4">
+      <PageContainer>
         <HelmetTitle title="Home" />
 
         <div className="flex h-screen pb-16">
@@ -28,7 +29,7 @@ export default function HomePage() {
             <RightSide />
           </div>
         </div>
-      </div>
+      </PageContainer>
     </div>
   );
 }

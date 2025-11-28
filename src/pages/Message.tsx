@@ -1,6 +1,7 @@
 import HelmetTitle from "@/components/layout/HelmetTitle";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import UserAvatar from "@/components/shared/UserAvatar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import PageContainer from "@/components/shared/PageContainer";
 
 export default function MessagePage() {
   const conversations = [
@@ -11,7 +12,7 @@ export default function MessagePage() {
 
   return (
     <div className="bg-muted fixed top-16 left-0 right-0 bottom-0">
-      <div className="container mx-auto px-4 py-6 min-h-screen">
+      <PageContainer>
         <HelmetTitle title="Message" />
 
         <div className="grid gap-6 lg:grid-cols-4">
@@ -27,15 +28,14 @@ export default function MessagePage() {
                     className="flex items-center justify-between p-3 rounded-lg hover:bg-accent cursor-pointer"
                   >
                     <div className="flex items-center space-x-3">
-                      <Avatar className="h-10 w-10">
-                        <AvatarImage src={`/images/avatar-${c.id}.png`} />
-                        <AvatarFallback>
-                          {c.name
-                            .split(" ")
-                            .map((n) => n[0])
-                            .join("")}
-                        </AvatarFallback>
-                      </Avatar>
+                      <UserAvatar
+                        className="h-10 w-10"
+                        src={`/images/avatar-${c.id}.png`}
+                        fallback={c.name
+                          .split(" ")
+                          .map((n) => n[0])
+                          .join("")}
+                      />
                       <div>
                         <p className="text-sm font-medium text-foreground">
                           {c.name}
@@ -70,7 +70,7 @@ export default function MessagePage() {
             </Card>
           </div>
         </div>
-      </div>
+      </PageContainer>
     </div>
   );
 }

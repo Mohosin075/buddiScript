@@ -1,9 +1,10 @@
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router";
+import PageContainer from "@/components/shared/PageContainer";
 
 const NotFoundPage = () => {
   return (
-    <div className="flex items-center justify-center min-h-screen bg-white p-6">
+    <PageContainer className="bg-white p-6 flex items-center justify-center">
       <div className="text-center">
         {/* Icon */}
         <svg
@@ -39,7 +40,7 @@ const NotFoundPage = () => {
           </Link>
         </div>
       </div>
-    </div>
+    </PageContainer>
   );
 };
 

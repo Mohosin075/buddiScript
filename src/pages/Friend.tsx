@@ -1,8 +1,9 @@
 import HelmetTitle from "@/components/layout/HelmetTitle";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import UserAvatar from "@/components/shared/UserAvatar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import PageContainer from "@/components/shared/PageContainer";
 
 export default function FriendPage() {
   const fakeRequests = [
@@ -18,7 +19,7 @@ export default function FriendPage() {
 
   return (
     <div className="bg-muted fixed top-16 left-0 right-0 bottom-0">
-      <div className="container mx-auto px-4 py-6 min-h-screen">
+      <PageContainer>
         <HelmetTitle title="Friend" />
 
         <div className="grid gap-6 lg:grid-cols-3">
@@ -34,15 +35,14 @@ export default function FriendPage() {
                     className="flex items-center justify-between p-3 rounded-lg hover:bg-accent cursor-pointer"
                   >
                     <div className="flex items-center space-x-3">
-                      <Avatar className="h-12 w-12">
-                        <AvatarImage src={`/images/avatar-${r.id}.png`} />
-                        <AvatarFallback>
-                          {r.name
-                            .split(" ")
-                            .map((n) => n[0])
-                            .join("")}
-                        </AvatarFallback>
-                      </Avatar>
+                      <UserAvatar
+                        className="h-12 w-12"
+                        src={`/images/avatar-${r.id}.png`}
+                        fallback={r.name
+                          .split(" ")
+                          .map((n) => n[0])
+                          .join("")}
+                      />
                       <div>
                         <p className="font-medium text-foreground">{r.name}</p>
                         <p className="text-sm text-muted-foreground">
@@ -84,15 +84,14 @@ export default function FriendPage() {
                       key={s.id}
                       className="flex items-center space-x-3 p-3 rounded-lg hover:bg-accent cursor-pointer"
                     >
-                      <Avatar className="h-10 w-10">
-                        <AvatarImage src={`/images/avatar-${s.id}.png`} />
-                        <AvatarFallback>
-                          {s.name
-                            .split(" ")
-                            .map((n) => n[0])
-                            .join("")}
-                        </AvatarFallback>
-                      </Avatar>
+                      <UserAvatar
+                        className="h-10 w-10"
+                        src={`/images/avatar-${s.id}.png`}
+                        fallback={s.name
+                          .split(" ")
+                          .map((n) => n[0])
+                          .join("")}
+                      />
                       <div className="flex-1">
                         <p className="text-sm font-medium">{s.name}</p>
                         <p className="text-xs text-muted-foreground">
@@ -123,7 +122,7 @@ export default function FriendPage() {
             </Card>
           </div>
         </div>
-      </div>
+      </PageContainer>
     </div>
   );
 }

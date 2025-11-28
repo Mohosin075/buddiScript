@@ -16,6 +16,7 @@ import { ArrowLeft, Mail } from "lucide-react";
 import type React from "react";
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router";
+import PageContainer from "@/components/shared/PageContainer";
 import { toast } from "sonner";
 
 export default function ForgotPasswordPage() {
@@ -32,8 +33,6 @@ export default function ForgotPasswordPage() {
       email: email,
     }).unwrap();
     console.log(result);
-
-    
 
     toast.info("Password reset link sent successfully!");
     // }
@@ -55,7 +54,7 @@ export default function ForgotPasswordPage() {
   }, [router]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-muted flex items-center justify-center p-4">
+    <PageContainer centered>
       <HelmetTitle title="Forgot Password" />
       <div className="w-full max-w-md space-y-6">
         {/* Logo/Brand */}
@@ -137,6 +136,6 @@ export default function ForgotPasswordPage() {
           )}
         </Card>
       </div>
-    </div>
+    </PageContainer>
   );
 }
