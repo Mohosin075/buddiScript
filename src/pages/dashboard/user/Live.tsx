@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
@@ -22,6 +23,13 @@ import {
   Loader2,
 } from "lucide-react";
 import AgoraRTC from "agora-rtc-sdk-ng";
+import type {
+  IAgoraRTCClient,
+  ICameraVideoTrack,
+  IMicrophoneAudioTrack,
+  IRemoteVideoTrack,
+  IRemoteAudioTrack,
+} from "agora-rtc-sdk-ng";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -69,15 +77,25 @@ interface JwtPayload {
   role: string;
 }
 
+interface RemoteUser {
+  uid: string;
+  videoTrack?: IRemoteVideoTrack;
+  audioTrack?: IRemoteAudioTrack;
+}
+
 const Live = () => {
   const [isBroadcasting, setIsBroadcasting] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isCreatingStream, setIsCreatingStream] = useState(false);
   const [streams, setStreams] = useState<Stream[]>([]);
   const [activeStream, setActiveStream] = useState<Stream | null>(null);
-  const [localVideoTrack, setLocalVideoTrack] = useState<any>(null);
-  const [localAudioTrack, setLocalAudioTrack] = useState<any>(null);
-  const [remoteUsers, setRemoteUsers] = useState<Set<string>>(new Set());
+  const [localVideoTrack, setLocalVideoTrack] =
+    useState<ICameraVideoTrack | null>(null);
+  const [localAudioTrack, setLocalAudioTrack] =
+    useState<IMicrophoneAudioTrack | null>(null);
+  const [remoteUsers, setRemoteUsers] = useState<Map<string, RemoteUser>>(
+    new Map()
+  );
   const [isVideoEnabled, setIsVideoEnabled] = useState(true);
   const [isAudioEnabled, setIsAudioEnabled] = useState(true);
   const [isChatEnabled, setIsChatEnabled] = useState(true);
@@ -89,10 +107,12 @@ const Live = () => {
   const [newStreamDescription, setNewStreamDescription] = useState("");
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [isJoined, setIsJoined] = useState(false);
 
-  const clientRef = useRef<any>(null);
+  const clientRef = useRef<IAgoraRTCClient | null>(null);
   const localVideoContainerRef = useRef<HTMLDivElement>(null);
   const remoteVideoContainerRef = useRef<HTMLDivElement>(null);
+  const remoteUsersRef = useRef<Map<string, RemoteUser>>(new Map());
 
   // Get auth token from localStorage
   const getToken = () => {
@@ -115,44 +135,97 @@ const Live = () => {
 
   // Initialize Agora client
   useEffect(() => {
-    clientRef.current = AgoraRTC.createClient({
-      mode: "live",
-      codec: "vp8",
-    });
+    // Initialize Agora client with proper error handling
+    try {
+      clientRef.current = AgoraRTC.createClient({
+        mode: "live",
+        codec: "vp8",
+      });
 
-    // Handle user published
-    clientRef.current.on(
-      "user-published",
-      async (user: any, mediaType: "audio" | "video") => {
-        await clientRef.current.subscribe(user, mediaType);
+      // Handle user published (when someone starts streaming)
+      clientRef.current.on("user-published", async (user, mediaType) => {
+        console.log("User published:", user.uid, mediaType);
+
+        // Subscribe to the remote user
+        await clientRef.current!.subscribe(user, mediaType);
 
         if (mediaType === "video") {
-          const remoteVideoContainer = remoteVideoContainerRef.current;
-          if (remoteVideoContainer && user.videoTrack) {
-            user.videoTrack.play(remoteVideoContainer);
-            setRemoteUsers((prev) => new Set([...prev, user.uid]));
+          console.log("Subscribed to video track for user:", user.uid);
+
+          // Get the remote video track
+          const videoTrack = user.videoTrack;
+          if (videoTrack) {
+            // Add to remote users map
+            const newRemoteUser: RemoteUser = {
+              uid: user.uid.toString(),
+              videoTrack,
+            };
+
+            // Update ref and state
+            remoteUsersRef.current.set(user.uid.toString(), newRemoteUser);
+            setRemoteUsers(new Map(remoteUsersRef.current));
+
+            // Play the video track
+            setTimeout(() => {
+              const container = remoteVideoContainerRef.current;
+              if (container) {
+                // Clear container first if it's empty
+                if (container.children.length === 0) {
+                  const videoElement = document.createElement("div");
+                  videoElement.id = `remote-video-${user.uid}`;
+                  videoElement.className = "w-full h-full";
+                  container.appendChild(videoElement);
+                  videoTrack.play(videoElement);
+                } else {
+                  // Use existing container
+                  videoTrack.play(container);
+                }
+              }
+            }, 100);
           }
         }
 
         if (mediaType === "audio") {
-          user.audioTrack.play();
+          const audioTrack = user.audioTrack;
+          if (audioTrack) {
+            audioTrack.play();
+          }
         }
-      }
-    );
+      });
 
-    // Handle user unpublished
-    clientRef.current.on(
-      "user-unpublished",
-      (user: any, mediaType: "audio" | "video") => {
+      // Handle user unpublished (when someone stops streaming)
+      clientRef.current.on("user-unpublished", (user, mediaType) => {
+        console.log("User unpublished:", user.uid, mediaType);
+
         if (mediaType === "video") {
-          setRemoteUsers((prev) => {
-            const newSet = new Set(prev);
-            newSet.delete(user.uid);
-            return newSet;
-          });
+          remoteUsersRef.current.delete(user.uid.toString());
+          setRemoteUsers(new Map(remoteUsersRef.current));
+
+          // Remove video element
+          const videoElement = document.getElementById(
+            `remote-video-${user.uid}`
+          );
+          if (videoElement) {
+            videoElement.remove();
+          }
         }
-      }
-    );
+      });
+
+      // Handle user joined
+      clientRef.current.on("user-joined", (user) => {
+        console.log("User joined:", user.uid);
+      });
+
+      // Handle user left
+      clientRef.current.on("user-left", (user) => {
+        console.log("User left:", user.uid);
+        remoteUsersRef.current.delete(user.uid.toString());
+        setRemoteUsers(new Map(remoteUsersRef.current));
+      });
+    } catch (error) {
+      console.error("Error initializing Agora client:", error);
+      toast.error("Failed to initialize video streaming");
+    }
 
     // Get current user ID
     const userId = getCurrentUserId();
@@ -162,17 +235,38 @@ const Live = () => {
     fetchStreams();
 
     return () => {
-      if (clientRef.current?.connectionState === "CONNECTED") {
-        clientRef.current.leave();
-      }
-      if (localVideoTrack) {
-        localVideoTrack.close();
-      }
-      if (localAudioTrack) {
-        localAudioTrack.close();
-      }
+      cleanupAgora();
     };
   }, []);
+
+  // Clean up Agora resources
+  const cleanupAgora = async () => {
+    try {
+      if (
+        clientRef.current &&
+        clientRef.current.connectionState === "CONNECTED"
+      ) {
+        await clientRef.current.leave();
+      }
+
+      if (localVideoTrack) {
+        localVideoTrack.close();
+        setLocalVideoTrack(null);
+      }
+
+      if (localAudioTrack) {
+        localAudioTrack.close();
+        setLocalAudioTrack(null);
+      }
+
+      remoteUsersRef.current.clear();
+      setRemoteUsers(new Map());
+      setIsJoined(false);
+      setIsBroadcasting(false);
+    } catch (error) {
+      console.error("Error cleaning up Agora:", error);
+    }
+  };
 
   // Fetch live streams
   const fetchStreams = async () => {
@@ -212,12 +306,11 @@ const Live = () => {
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          eventId: "692762edce1f8de66691cfd8", // You need to provide an actual event ID
+          eventId: "692762edce1f8de66691cfd8",
           title: newStreamTitle,
           description: newStreamDescription,
           streamType: "public",
           chatEnabled: true,
-          channelName: `stream_${Date.now()}`, // Unique channel name
         }),
       });
 
@@ -228,7 +321,7 @@ const Live = () => {
         setNewStreamTitle("");
         setNewStreamDescription("");
         setShowCreateDialog(false);
-        fetchStreams(); // Refresh the stream list
+        fetchStreams();
       } else {
         throw new Error(data.message);
       }
@@ -298,7 +391,7 @@ const Live = () => {
 
       const streamId = createData.data._id || createData.data.id;
 
-      // 2. Start the stream
+      // 2. Start the stream on backend
       const startResponse = await fetch(
         `${BASE_URL}/livestream/${streamId}/start`,
         {
@@ -318,28 +411,8 @@ const Live = () => {
       // 3. Get broadcaster token
       const tokenData = await getAgoraToken(streamId, "broadcaster");
 
-      // 4. Initialize local tracks
-      const cameraTrack = await AgoraRTC.createCameraVideoTrack();
-      const microphoneTrack = await AgoraRTC.createMicrophoneAudioTrack();
-
-      setLocalVideoTrack(cameraTrack);
-      setLocalAudioTrack(microphoneTrack);
-
-      // 5. Join channel
-      await clientRef.current.join(
-        "9476d1c9b94d48f3a6f312798aa6c3a6", // Your Agora App ID
-        tokenData.channelName,
-        tokenData.token,
-        null
-      );
-
-      // 6. Publish local tracks
-      await clientRef.current.publish([cameraTrack, microphoneTrack]);
-
-      // 7. Play local video
-      if (localVideoContainerRef.current) {
-        cameraTrack.play(localVideoContainerRef.current);
-      }
+      // 4. Initialize and setup local tracks
+      await setupBroadcaster(tokenData);
 
       setIsBroadcasting(true);
       setActiveStream(startData.data);
@@ -355,13 +428,60 @@ const Live = () => {
     }
   };
 
+  // Setup broadcaster with local tracks
+  const setupBroadcaster = async (tokenData: any) => {
+    try {
+      // Cleanup existing tracks
+      if (localVideoTrack) {
+        localVideoTrack.close();
+      }
+      if (localAudioTrack) {
+        localAudioTrack.close();
+      }
+
+      // Create local tracks
+      const cameraTrack = await AgoraRTC.createCameraVideoTrack({
+        encoderConfig: "720p_1",
+      });
+      const microphoneTrack = await AgoraRTC.createMicrophoneAudioTrack();
+
+      setLocalVideoTrack(cameraTrack);
+      setLocalAudioTrack(microphoneTrack);
+
+      // Join channel as broadcaster
+      await clientRef.current!.join(
+        "9476d1c9b94d48f3a6f312798aa6c3a6",
+        tokenData.channelName,
+        tokenData.token,
+        null
+      );
+
+      // Set client role to host
+      await clientRef.current!.setClientRole("host");
+
+      // Publish local tracks
+      await clientRef.current!.publish([cameraTrack, microphoneTrack]);
+
+      // Play local video preview
+      if (localVideoContainerRef.current) {
+        cameraTrack.play(localVideoContainerRef.current);
+      }
+
+      setIsJoined(true);
+      console.log("Broadcaster setup complete");
+    } catch (error) {
+      console.error("Error setting up broadcaster:", error);
+      throw error;
+    }
+  };
+
   // Start existing stream as broadcaster
   const startExistingBroadcast = async (streamId: string) => {
     setIsLoading(true);
     try {
       const token = getToken();
 
-      // 1. Start the stream
+      // 1. Start the stream on backend
       const startResponse = await fetch(
         `${BASE_URL}/livestream/${streamId}/start`,
         {
@@ -381,34 +501,13 @@ const Live = () => {
       // 2. Get broadcaster token
       const tokenData = await getAgoraToken(streamId, "broadcaster");
 
-      // 3. Initialize local tracks
-      const cameraTrack = await AgoraRTC.createCameraVideoTrack();
-      const microphoneTrack = await AgoraRTC.createMicrophoneAudioTrack();
-
-      setLocalVideoTrack(cameraTrack);
-      setLocalAudioTrack(microphoneTrack);
-
-      // 4. Join channel
-      await clientRef.current.join(
-        "9476d1c9b94d48f3a6f312798aa6c3a6",
-        tokenData.channelName,
-        tokenData.token,
-        null
-      );
-
-      // 5. Publish local tracks
-      await clientRef.current.publish([cameraTrack, microphoneTrack]);
-
-      // 6. Play local video
-      if (localVideoContainerRef.current) {
-        cameraTrack.play(localVideoContainerRef.current);
-      }
+      // 3. Setup broadcaster
+      await setupBroadcaster(tokenData);
 
       setIsBroadcasting(true);
       setActiveStream(startData.data);
       toast.success("Live broadcast started!");
 
-      // Refresh streams
       fetchStreams();
     } catch (error: any) {
       console.error("Error starting broadcast:", error);
@@ -422,21 +521,34 @@ const Live = () => {
   const stopBroadcast = async () => {
     if (!activeStream) return;
 
+    setIsLoading(true);
     try {
       const token = getToken();
 
-      // 1. Unpublish tracks
+      // 1. Unpublish and close local tracks
       if (localVideoTrack) {
-        clientRef.current.unpublish(localVideoTrack);
+        if (clientRef.current) {
+          await clientRef.current.unpublish(localVideoTrack);
+        }
         localVideoTrack.close();
+        setLocalVideoTrack(null);
       }
+
       if (localAudioTrack) {
-        clientRef.current.unpublish(localAudioTrack);
+        if (clientRef.current) {
+          await clientRef.current.unpublish(localAudioTrack);
+        }
         localAudioTrack.close();
+        setLocalAudioTrack(null);
       }
 
       // 2. Leave channel
-      await clientRef.current.leave();
+      if (
+        clientRef.current &&
+        clientRef.current.connectionState === "CONNECTED"
+      ) {
+        await clientRef.current.leave();
+      }
 
       // 3. End the stream on backend
       const endResponse = await fetch(
@@ -452,14 +564,24 @@ const Live = () => {
       const endData = await endResponse.json();
 
       if (!endData.success) {
-        throw new Error(endData.message);
+        console.warn("Failed to end stream on backend:", endData.message);
       }
 
+      // 4. Cleanup state
       setIsBroadcasting(false);
-      setLocalVideoTrack(null);
-      setLocalAudioTrack(null);
+      setIsJoined(false);
       setActiveStream(null);
-      setRemoteUsers(new Set());
+      remoteUsersRef.current.clear();
+      setRemoteUsers(new Map());
+
+      // Clear video containers
+      if (localVideoContainerRef.current) {
+        localVideoContainerRef.current.innerHTML = "";
+      }
+      if (remoteVideoContainerRef.current) {
+        remoteVideoContainerRef.current.innerHTML = "";
+      }
+
       toast.success("Broadcast ended");
 
       // Refresh streams
@@ -467,6 +589,8 @@ const Live = () => {
     } catch (error) {
       console.error("Error stopping broadcast:", error);
       toast.error("Failed to stop broadcast");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -474,20 +598,29 @@ const Live = () => {
   const joinAsViewer = async (streamId: string) => {
     setIsLoading(true);
     try {
+      // Cleanup existing connection
+      await cleanupAgora();
+
       // Get viewer token
       const tokenData = await getAgoraToken(streamId, "viewer");
 
-      // Join channel
-      await clientRef.current.join(
+      // Join channel as audience
+      await clientRef.current!.join(
         "9476d1c9b94d48f3a6f312798aa6c3a6",
         tokenData.channelName,
         tokenData.token,
         null
       );
 
+      // Set client role to audience
+      await clientRef.current!.setClientRole("audience");
+
       const stream = streams.find((s) => s.id === streamId);
       setActiveStream(stream || null);
+      setIsJoined(true);
       toast.success("Joined stream as viewer");
+
+      console.log("Viewer joined successfully, waiting for broadcaster...");
     } catch (error: any) {
       console.error("Error joining stream:", error);
       toast.error(error.message || "Failed to join stream");
@@ -499,9 +632,7 @@ const Live = () => {
   // Leave viewer stream
   const leaveViewerStream = async () => {
     try {
-      await clientRef.current.leave();
-      setActiveStream(null);
-      setRemoteUsers(new Set());
+      await cleanupAgora();
       toast.success("Left the stream");
     } catch (error) {
       console.error("Error leaving stream:", error);
@@ -509,27 +640,39 @@ const Live = () => {
     }
   };
 
+  console.log({leaveViewerStream})
+
   // Toggle video
-  const toggleVideo = () => {
+  const toggleVideo = async () => {
     if (localVideoTrack) {
-      if (isVideoEnabled) {
-        localVideoTrack.setEnabled(false);
-      } else {
-        localVideoTrack.setEnabled(true);
+      try {
+        if (isVideoEnabled) {
+          await localVideoTrack.setEnabled(false);
+          setIsVideoEnabled(false);
+        } else {
+          await localVideoTrack.setEnabled(true);
+          setIsVideoEnabled(true);
+        }
+      } catch (error) {
+        console.error("Error toggling video:", error);
       }
-      setIsVideoEnabled(!isVideoEnabled);
     }
   };
 
   // Toggle audio
-  const toggleAudio = () => {
+  const toggleAudio = async () => {
     if (localAudioTrack) {
-      if (isAudioEnabled) {
-        localAudioTrack.setEnabled(false);
-      } else {
-        localAudioTrack.setEnabled(true);
+      try {
+        if (isAudioEnabled) {
+          await localAudioTrack.setEnabled(false);
+          setIsAudioEnabled(false);
+        } else {
+          await localAudioTrack.setEnabled(true);
+          setIsAudioEnabled(true);
+        }
+      } catch (error) {
+        console.error("Error toggling audio:", error);
       }
-      setIsAudioEnabled(!isAudioEnabled);
     }
   };
 
@@ -662,15 +805,50 @@ const Live = () => {
                 <div className="flex items-center">
                   <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse mr-3"></div>
                   <span className="font-bold">You are live!</span>
+                  <span className="text-sm text-gray-500 ml-2">
+                    {remoteUsers.size} viewer{remoteUsers.size !== 1 ? "s" : ""}
+                  </span>
                 </div>
-                <Button
-                  variant="destructive"
-                  onClick={stopBroadcast}
-                  disabled={isLoading}
-                >
-                  <Square className="w-4 h-4 mr-2" />
-                  End Stream
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      if (isVideoEnabled) toggleVideo();
+                      else toggleVideo();
+                    }}
+                    disabled={!localVideoTrack}
+                  >
+                    {isVideoEnabled ? (
+                      <Video className="w-4 h-4" />
+                    ) : (
+                      <EyeOff className="w-4 h-4" />
+                    )}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      if (isAudioEnabled) toggleAudio();
+                      else toggleAudio();
+                    }}
+                    disabled={!localAudioTrack}
+                  >
+                    {isAudioEnabled ? (
+                      <Mic className="w-4 h-4" />
+                    ) : (
+                      <MicOff className="w-4 h-4" />
+                    )}
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    onClick={stopBroadcast}
+                    disabled={isLoading}
+                  >
+                    <Square className="w-4 h-4 mr-2" />
+                    End Stream
+                  </Button>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -804,7 +982,7 @@ const Live = () => {
                               <Button
                                 size="sm"
                                 onClick={() => joinAsViewer(stream.id)}
-                                disabled={isLoading}
+                                disabled={isLoading || isJoined}
                               >
                                 <Eye className="w-4 h-4 mr-2" />
                                 Watch Live
@@ -846,74 +1024,49 @@ const Live = () => {
                         </Badge>
                         <Badge variant="outline">
                           <Users className="w-3 h-3 mr-1" />
-                          {remoteUsers.size + (isBroadcasting ? 1 : 0)} online
+                          {remoteUsers.size} online
                         </Badge>
                       </div>
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <div className="relative bg-black rounded-lg overflow-hidden aspect-video">
-                      {/* Remote Video */}
+                    <div className="relative bg-black rounded-lg overflow-hidden aspect-video min-h-[400px]">
+                      {/* Remote Video Container (for broadcaster's video when viewing) */}
                       <div
                         ref={remoteVideoContainerRef}
                         className="w-full h-full"
-                      />
+                      >
+                        {remoteUsers.size === 0 && !isBroadcasting && (
+                          <div className="flex items-center justify-center h-full">
+                            <div className="text-center">
+                              <Video className="w-16 h-16 mx-auto text-gray-400 mb-4" />
+                              <p className="text-gray-300">
+                                Waiting for stream to start...
+                              </p>
+                              <p className="text-sm text-gray-400 mt-2">
+                                {isJoined
+                                  ? "Connected, waiting for video"
+                                  : "Not connected"}
+                              </p>
+                            </div>
+                          </div>
+                        )}
+                      </div>
 
-                      {/* Local Video (Picture-in-Picture) */}
-                      {isBroadcasting && (
-                        <div className="absolute bottom-4 right-4 w-48 h-32 rounded-lg overflow-hidden border-2 border-white">
-                          <div
-                            ref={localVideoContainerRef}
-                            className="w-full h-full"
-                          />
+                      {/* Local Video Preview (Picture-in-Picture for broadcaster) */}
+                      {isBroadcasting && localVideoTrack && (
+                        <div className="absolute bottom-4 right-4 w-48 h-32 rounded-lg overflow-hidden border-2 border-white shadow-lg">
+                          <div className="relative w-full h-full bg-black">
+                            <div
+                              ref={localVideoContainerRef}
+                              className="w-full h-full"
+                            />
+                            <div className="absolute top-2 left-2 bg-red-600 text-white text-xs px-2 py-1 rounded">
+                              YOU
+                            </div>
+                          </div>
                         </div>
                       )}
-
-                      {/* Controls Overlay */}
-                      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4">
-                        <div className="flex justify-center gap-4">
-                          {isBroadcasting ? (
-                            <>
-                              <Button
-                                size="icon"
-                                variant={
-                                  isVideoEnabled ? "secondary" : "destructive"
-                                }
-                                onClick={toggleVideo}
-                                className="rounded-full"
-                              >
-                                {isVideoEnabled ? <Video /> : <EyeOff />}
-                              </Button>
-                              <Button
-                                size="icon"
-                                variant={
-                                  isAudioEnabled ? "secondary" : "destructive"
-                                }
-                                onClick={toggleAudio}
-                                className="rounded-full"
-                              >
-                                {isAudioEnabled ? <Mic /> : <MicOff />}
-                              </Button>
-                              <Button
-                                size="icon"
-                                variant="destructive"
-                                onClick={stopBroadcast}
-                                className="rounded-full"
-                              >
-                                <Square />
-                              </Button>
-                            </>
-                          ) : (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={leaveViewerStream}
-                            >
-                              Leave Stream
-                            </Button>
-                          )}
-                        </div>
-                      </div>
                     </div>
                   </CardContent>
                 </Card>
@@ -1028,12 +1181,14 @@ const Live = () => {
                           value={message}
                           onChange={(e) => setMessage(e.target.value)}
                           onKeyPress={(e) => e.key === "Enter" && sendMessage()}
-                          disabled={!isChatEnabled}
+                          disabled={!isChatEnabled || !isJoined}
                           className="flex-1"
                         />
                         <Button
                           onClick={sendMessage}
-                          disabled={!message.trim() || !isChatEnabled}
+                          disabled={
+                            !message.trim() || !isChatEnabled || !isJoined
+                          }
                         >
                           Send
                         </Button>
@@ -1045,6 +1200,7 @@ const Live = () => {
                             checked={isChatEnabled}
                             onChange={() => setIsChatEnabled(!isChatEnabled)}
                             className="mr-2"
+                            disabled={!isJoined}
                           />
                           Enable Chat
                         </Label>
@@ -1063,13 +1219,17 @@ const Live = () => {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-2">
-                      {Array.from(remoteUsers).map((uid) => (
+                      {Array.from(remoteUsers.values()).map((user) => (
                         <div
-                          key={uid}
+                          key={user.uid}
                           className="flex items-center p-2 hover:bg-gray-50 rounded"
                         >
                           <User className="w-4 h-4 mr-2 text-gray-500" />
-                          <span>Viewer {uid}</span>
+                          <span>
+                            {user.uid === currentUserId
+                              ? "You"
+                              : `Viewer ${user.uid}`}
+                          </span>
                         </div>
                       ))}
                       {remoteUsers.size === 0 && (
