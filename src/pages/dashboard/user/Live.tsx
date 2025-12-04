@@ -108,11 +108,13 @@ const Live = () => {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [isJoined, setIsJoined] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   const clientRef = useRef<IAgoraRTCClient | null>(null);
   const localVideoContainerRef = useRef<HTMLDivElement>(null);
   const remoteVideoContainerRef = useRef<HTMLDivElement>(null);
   const remoteUsersRef = useRef<Map<string, RemoteUser>>(new Map());
+  const remoteVideoElementsRef = useRef<Map<string, HTMLDivElement>>(new Map());
 
   // Get auth token from localStorage
   const getToken = () => {
@@ -134,70 +136,105 @@ const Live = () => {
   };
 
   // Initialize Agora client
-  useEffect(() => {
-    // Initialize Agora client with proper error handling
-    try {
-      clientRef.current = AgoraRTC.createClient({
-        mode: "live",
-        codec: "vp8",
-      });
+  const initializeAgoraClient = () => {
+    if (!clientRef.current) {
+      try {
+        clientRef.current = AgoraRTC.createClient({
+          mode: "live",
+          codec: "vp8",
+        });
 
-      // Handle user published (when someone starts streaming)
-      clientRef.current.on("user-published", async (user, mediaType) => {
-        console.log("User published:", user.uid, mediaType);
+        // Handle user published (when someone starts streaming)
+        clientRef.current.on("user-published", async (user, mediaType) => {
+          console.log("User published:", user.uid, mediaType);
 
-        // Subscribe to the remote user
-        await clientRef.current!.subscribe(user, mediaType);
+          // Subscribe to the remote user
+          try {
+            await clientRef.current!.subscribe(user, mediaType);
+            console.log("Subscribed to user:", user.uid, mediaType);
 
-        if (mediaType === "video") {
-          console.log("Subscribed to video track for user:", user.uid);
+            if (mediaType === "video") {
+              const videoTrack = user.videoTrack;
+              if (videoTrack) {
+                console.log("Got remote video track for user:", user.uid);
 
-          // Get the remote video track
-          const videoTrack = user.videoTrack;
-          if (videoTrack) {
-            // Add to remote users map
-            const newRemoteUser: RemoteUser = {
-              uid: user.uid.toString(),
-              videoTrack,
-            };
+                const newRemoteUser: RemoteUser = {
+                  uid: user.uid.toString(),
+                  videoTrack,
+                };
 
-            // Update ref and state
-            remoteUsersRef.current.set(user.uid.toString(), newRemoteUser);
-            setRemoteUsers(new Map(remoteUsersRef.current));
+                // Update ref and state
+                remoteUsersRef.current.set(user.uid.toString(), newRemoteUser);
+                setRemoteUsers(new Map(remoteUsersRef.current));
 
-            // Play the video track
-            setTimeout(() => {
-              const container = remoteVideoContainerRef.current;
-              if (container) {
-                // Clear container first if it's empty
-                if (container.children.length === 0) {
-                  const videoElement = document.createElement("div");
-                  videoElement.id = `remote-video-${user.uid}`;
-                  videoElement.className = "w-full h-full";
-                  container.appendChild(videoElement);
-                  videoTrack.play(videoElement);
-                } else {
-                  // Use existing container
-                  videoTrack.play(container);
-                }
+                // Play the video track
+                setTimeout(() => {
+                  const container = document.getElementById(
+                    `remote-video-${user.uid}`
+                  );
+                  if (container) {
+                    videoTrack.play(container);
+                    console.log("Playing remote video for user:", user.uid);
+                  } else {
+                    console.error(
+                      "Remote video container not found for user:",
+                      user.uid
+                    );
+                  }
+                }, 500);
               }
-            }, 100);
+            }
+
+            if (mediaType === "audio") {
+              const audioTrack = user.audioTrack;
+              if (audioTrack) {
+                audioTrack.play();
+                console.log("Playing remote audio for user:", user.uid);
+              }
+            }
+          } catch (error) {
+            console.error("Error subscribing to user:", error);
           }
-        }
+        });
 
-        if (mediaType === "audio") {
-          const audioTrack = user.audioTrack;
-          if (audioTrack) {
-            audioTrack.play();
+        // Handle user unpublished (when someone stops streaming)
+        clientRef.current.on("user-unpublished", (user, mediaType) => {
+          console.log("User unpublished:", user.uid, mediaType);
+
+          if (mediaType === "video") {
+            const remoteUser = remoteUsersRef.current.get(user.uid.toString());
+            if (remoteUser?.videoTrack) {
+              remoteUser.videoTrack.stop();
+            }
+            remoteUsersRef.current.delete(user.uid.toString());
+            setRemoteUsers(new Map(remoteUsersRef.current));
           }
-        }
-      });
+        });
 
-      // Handle user unpublished (when someone stops streaming)
-      clientRef.current.on("user-unpublished", (user, mediaType) => {
-        console.log("User unpublished:", user.uid, mediaType);
+        // Handle user joined
+        clientRef.current.on("user-joined", (user) => {
+          console.log("User joined:", user.uid);
+          // Create container for remote user
+          setTimeout(() => {
+            const container = remoteVideoContainerRef.current;
+            if (container) {
+              const videoElement = document.createElement("div");
+              videoElement.id = `remote-video-${user.uid}`;
+              videoElement.className = "w-full h-full";
+              container.appendChild(videoElement);
+            }
+          }, 100);
+        });
 
-        if (mediaType === "video") {
+        // Handle user left
+        clientRef.current.on("user-left", (user) => {
+          console.log("User left:", user.uid);
+
+          const remoteUser = remoteUsersRef.current.get(user.uid.toString());
+          if (remoteUser?.videoTrack) {
+            remoteUser.videoTrack.stop();
+          }
+
           remoteUsersRef.current.delete(user.uid.toString());
           setRemoteUsers(new Map(remoteUsersRef.current));
 
@@ -208,24 +245,20 @@ const Live = () => {
           if (videoElement) {
             videoElement.remove();
           }
-        }
-      });
+        });
 
-      // Handle user joined
-      clientRef.current.on("user-joined", (user) => {
-        console.log("User joined:", user.uid);
-      });
-
-      // Handle user left
-      clientRef.current.on("user-left", (user) => {
-        console.log("User left:", user.uid);
-        remoteUsersRef.current.delete(user.uid.toString());
-        setRemoteUsers(new Map(remoteUsersRef.current));
-      });
-    } catch (error) {
-      console.error("Error initializing Agora client:", error);
-      toast.error("Failed to initialize video streaming");
+        setIsInitialized(true);
+        console.log("Agora client initialized successfully");
+      } catch (error) {
+        console.error("Error initializing Agora client:", error);
+        toast.error("Failed to initialize video streaming");
+      }
     }
+  };
+
+  useEffect(() => {
+    // Initialize Agora client
+    initializeAgoraClient();
 
     // Get current user ID
     const userId = getCurrentUserId();
@@ -247,22 +280,39 @@ const Live = () => {
         clientRef.current.connectionState === "CONNECTED"
       ) {
         await clientRef.current.leave();
+        console.log("Left Agora channel");
       }
 
       if (localVideoTrack) {
+        localVideoTrack.stop();
         localVideoTrack.close();
         setLocalVideoTrack(null);
       }
 
       if (localAudioTrack) {
+        localAudioTrack.stop();
         localAudioTrack.close();
         setLocalAudioTrack(null);
       }
+
+      // Clear all remote video elements
+      remoteVideoElementsRef.current.forEach((element) => {
+        element.remove();
+      });
+      remoteVideoElementsRef.current.clear();
 
       remoteUsersRef.current.clear();
       setRemoteUsers(new Map());
       setIsJoined(false);
       setIsBroadcasting(false);
+
+      // Clear video containers
+      if (localVideoContainerRef.current) {
+        localVideoContainerRef.current.innerHTML = "";
+      }
+      if (remoteVideoContainerRef.current) {
+        remoteVideoContainerRef.current.innerHTML = "";
+      }
     } catch (error) {
       console.error("Error cleaning up Agora:", error);
     }
@@ -431,11 +481,29 @@ const Live = () => {
   // Setup broadcaster with local tracks
   const setupBroadcaster = async (tokenData: any) => {
     try {
+      // Initialize client if not already
+      if (!isInitialized) {
+        initializeAgoraClient();
+        // Wait a bit for initialization
+        await new Promise((resolve) => setTimeout(resolve, 100));
+      }
+
+      // Request camera and microphone permissions
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: true,
+        audio: true,
+      });
+
+      // Stop all tracks from the stream
+      stream.getTracks().forEach((track) => track.stop());
+
       // Cleanup existing tracks
       if (localVideoTrack) {
+        localVideoTrack.stop();
         localVideoTrack.close();
       }
       if (localAudioTrack) {
+        localAudioTrack.stop();
         localAudioTrack.close();
       }
 
@@ -462,15 +530,29 @@ const Live = () => {
       // Publish local tracks
       await clientRef.current!.publish([cameraTrack, microphoneTrack]);
 
-      // Play local video preview
-      if (localVideoContainerRef.current) {
-        cameraTrack.play(localVideoContainerRef.current);
-      }
+      // Play local video preview with delay to ensure container is ready
+      setTimeout(() => {
+        if (localVideoContainerRef.current) {
+          // Clear container first
+          localVideoContainerRef.current.innerHTML = "";
+          cameraTrack.play(localVideoContainerRef.current);
+          console.log("Local video playing in container");
+        } else {
+          console.error("Local video container not found");
+        }
+      }, 500);
 
       setIsJoined(true);
       console.log("Broadcaster setup complete");
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error setting up broadcaster:", error);
+      if (error.name === "NOT_SUPPORTED") {
+        toast.error("Browser doesn't support WebRTC or camera access");
+      } else if (error.name === "PERMISSION_DENIED") {
+        toast.error("Please allow camera and microphone access");
+      } else {
+        toast.error("Failed to setup broadcaster: " + error.message);
+      }
       throw error;
     }
   };
@@ -530,6 +612,7 @@ const Live = () => {
         if (clientRef.current) {
           await clientRef.current.unpublish(localVideoTrack);
         }
+        localVideoTrack.stop();
         localVideoTrack.close();
         setLocalVideoTrack(null);
       }
@@ -538,6 +621,7 @@ const Live = () => {
         if (clientRef.current) {
           await clientRef.current.unpublish(localAudioTrack);
         }
+        localAudioTrack.stop();
         localAudioTrack.close();
         setLocalAudioTrack(null);
       }
@@ -601,6 +685,18 @@ const Live = () => {
       // Cleanup existing connection
       await cleanupAgora();
 
+      // Initialize client if not already
+      if (!isInitialized) {
+        initializeAgoraClient();
+        // Wait a bit for initialization
+        await new Promise((resolve) => setTimeout(resolve, 100));
+      }
+
+      // Clear remote container
+      if (remoteVideoContainerRef.current) {
+        remoteVideoContainerRef.current.innerHTML = "";
+      }
+
       // Get viewer token
       const tokenData = await getAgoraToken(streamId, "viewer");
 
@@ -633,14 +729,13 @@ const Live = () => {
   const leaveViewerStream = async () => {
     try {
       await cleanupAgora();
+      setActiveStream(null);
       toast.success("Left the stream");
     } catch (error) {
       console.error("Error leaving stream:", error);
       toast.error("Failed to leave stream");
     }
   };
-
-  console.log({leaveViewerStream})
 
   // Toggle video
   const toggleVideo = async () => {
@@ -649,12 +744,15 @@ const Live = () => {
         if (isVideoEnabled) {
           await localVideoTrack.setEnabled(false);
           setIsVideoEnabled(false);
+          toast.info("Video turned off");
         } else {
           await localVideoTrack.setEnabled(true);
           setIsVideoEnabled(true);
+          toast.info("Video turned on");
         }
       } catch (error) {
         console.error("Error toggling video:", error);
+        toast.error("Failed to toggle video");
       }
     }
   };
@@ -666,12 +764,15 @@ const Live = () => {
         if (isAudioEnabled) {
           await localAudioTrack.setEnabled(false);
           setIsAudioEnabled(false);
+          toast.info("Microphone muted");
         } else {
           await localAudioTrack.setEnabled(true);
           setIsAudioEnabled(true);
+          toast.info("Microphone unmuted");
         }
       } catch (error) {
         console.error("Error toggling audio:", error);
+        toast.error("Failed to toggle audio");
       }
     }
   };
@@ -813,10 +914,7 @@ const Live = () => {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => {
-                      if (isVideoEnabled) toggleVideo();
-                      else toggleVideo();
-                    }}
+                    onClick={toggleVideo}
                     disabled={!localVideoTrack}
                   >
                     {isVideoEnabled ? (
@@ -828,10 +926,7 @@ const Live = () => {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => {
-                      if (isAudioEnabled) toggleAudio();
-                      else toggleAudio();
-                    }}
+                    onClick={toggleAudio}
                     disabled={!localAudioTrack}
                   >
                     {isAudioEnabled ? (
@@ -982,7 +1077,10 @@ const Live = () => {
                               <Button
                                 size="sm"
                                 onClick={() => joinAsViewer(stream.id)}
-                                disabled={isLoading || isJoined}
+                                disabled={
+                                  isLoading ||
+                                  (isJoined && activeStream?.id === stream.id)
+                                }
                               >
                                 <Eye className="w-4 h-4 mr-2" />
                                 Watch Live
@@ -1026,12 +1124,21 @@ const Live = () => {
                           <Users className="w-3 h-3 mr-1" />
                           {remoteUsers.size} online
                         </Badge>
+                        {!isBroadcasting && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={leaveViewerStream}
+                          >
+                            Leave Stream
+                          </Button>
+                        )}
                       </div>
                     </div>
                   </CardHeader>
                   <CardContent>
                     <div className="relative bg-black rounded-lg overflow-hidden aspect-video min-h-[400px]">
-                      {/* Remote Video Container (for broadcaster's video when viewing) */}
+                      {/* Main Video Container */}
                       <div
                         ref={remoteVideoContainerRef}
                         className="w-full h-full"
