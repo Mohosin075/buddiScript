@@ -96,8 +96,8 @@ const Live = () => {
   const [remoteUsers, setRemoteUsers] = useState<Map<string, RemoteUser>>(
     new Map()
   );
-  const [isVideoEnabled, setIsVideoEnabled] = useState(false);
-  const [isAudioEnabled, setIsAudioEnabled] = useState(false);
+  const [isVideoEnabled, setIsVideoEnabled] = useState(true);
+  const [isAudioEnabled, setIsAudioEnabled] = useState(true);
   const [isChatEnabled, setIsChatEnabled] = useState(true);
   const [message, setMessage] = useState("");
   const [chatMessages, setChatMessages] = useState<
@@ -109,12 +109,13 @@ const Live = () => {
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [isJoined, setIsJoined] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
+  const [localStream, setLocalStream] = useState<MediaStream | null>(null);
+  const [cameraPermissionDenied, setCameraPermissionDenied] = useState(false);
 
   const clientRef = useRef<IAgoraRTCClient | null>(null);
   const localVideoContainerRef = useRef<HTMLDivElement>(null);
   const remoteVideoContainerRef = useRef<HTMLDivElement>(null);
   const remoteUsersRef = useRef<Map<string, RemoteUser>>(new Map());
-  const remoteVideoElementsRef = useRef<Map<string, HTMLDivElement>>(new Map());
 
   // Get auth token from localStorage
   const getToken = () => {
@@ -132,6 +133,20 @@ const Live = () => {
     } catch (error) {
       console.error("Error decoding token:", error);
       return null;
+    }
+  };
+
+  // Check if camera is available
+  const checkCameraAvailability = async (): Promise<boolean> => {
+    try {
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      const videoDevices = devices.filter(
+        (device) => device.kind === "videoinput"
+      );
+      return videoDevices.length > 0;
+    } catch (error) {
+      console.error("Error checking camera:", error);
+      return false;
     }
   };
 
@@ -169,19 +184,17 @@ const Live = () => {
 
                 // Play the video track
                 setTimeout(() => {
-                  const container = document.getElementById(
-                    `remote-video-${user.uid}`
-                  );
-                  if (container) {
-                    videoTrack.play(container);
+                  if (remoteVideoContainerRef.current) {
+                    // Clear container first
+                    remoteVideoContainerRef.current.innerHTML = "";
+                    const videoElement = document.createElement("div");
+                    videoElement.id = `remote-video-${user.uid}`;
+                    videoElement.className = "w-full h-full";
+                    remoteVideoContainerRef.current.appendChild(videoElement);
+                    videoTrack.play(videoElement);
                     console.log("Playing remote video for user:", user.uid);
-                  } else {
-                    console.error(
-                      "Remote video container not found for user:",
-                      user.uid
-                    );
                   }
-                }, 500);
+                }, 100);
               }
             }
 
@@ -208,22 +221,20 @@ const Live = () => {
             }
             remoteUsersRef.current.delete(user.uid.toString());
             setRemoteUsers(new Map(remoteUsersRef.current));
+
+            // Remove video element
+            const videoElement = document.getElementById(
+              `remote-video-${user.uid}`
+            );
+            if (videoElement) {
+              videoElement.remove();
+            }
           }
         });
 
         // Handle user joined
         clientRef.current.on("user-joined", (user) => {
           console.log("User joined:", user.uid);
-          // Create container for remote user
-          setTimeout(() => {
-            const container = remoteVideoContainerRef.current;
-            if (container) {
-              const videoElement = document.createElement("div");
-              videoElement.id = `remote-video-${user.uid}`;
-              videoElement.className = "w-full h-full";
-              container.appendChild(videoElement);
-            }
-          }, 100);
         });
 
         // Handle user left
@@ -295,11 +306,12 @@ const Live = () => {
         setLocalAudioTrack(null);
       }
 
-      // Clear all remote video elements
-      remoteVideoElementsRef.current.forEach((element) => {
-        element.remove();
-      });
-      remoteVideoElementsRef.current.clear();
+      if (localStream) {
+        localStream.getTracks().forEach((track) => {
+          track.stop();
+        });
+        setLocalStream(null);
+      }
 
       remoteUsersRef.current.clear();
       setRemoteUsers(new Map());
@@ -488,33 +500,88 @@ const Live = () => {
         await new Promise((resolve) => setTimeout(resolve, 100));
       }
 
-      // Request camera and microphone permissions
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: true,
-        audio: true,
-      });
-
-      // Stop all tracks from the stream
-      stream.getTracks().forEach((track) => track.stop());
+      // Check if camera is available
+      const hasCamera = await checkCameraAvailability();
+      if (!hasCamera) {
+        toast.error("No camera found on your device");
+        throw new Error("No camera found");
+      }
 
       // Cleanup existing tracks
-      if (localVideoTrack) {
-        localVideoTrack.stop();
-        localVideoTrack.close();
-      }
-      if (localAudioTrack) {
-        localAudioTrack.stop();
-        localAudioTrack.close();
-      }
+      await cleanupAgora();
 
-      // Create local tracks
-      const cameraTrack = await AgoraRTC.createCameraVideoTrack({
-        encoderConfig: "720p_1",
-      });
-      const microphoneTrack = await AgoraRTC.createMicrophoneAudioTrack();
+      // Create local tracks with simple configuration
+      let cameraTrack: ICameraVideoTrack;
+      let microphoneTrack: IMicrophoneAudioTrack;
 
-      setLocalVideoTrack(cameraTrack);
-      setLocalAudioTrack(microphoneTrack);
+      try {
+        // Request camera and microphone permissions with fallback
+        let mediaStream: MediaStream;
+
+        try {
+          mediaStream = await navigator.mediaDevices.getUserMedia({
+            video: {
+              width: { ideal: 640 },
+              height: { ideal: 480 },
+              frameRate: { ideal: 24 },
+            },
+            audio: {
+              echoCancellation: true,
+              noiseSuppression: true,
+              autoGainControl: true,
+            },
+          });
+        } catch (videoError) {
+          // Try without video constraints
+          console.log("Trying without video constraints");
+          mediaStream = await navigator.mediaDevices.getUserMedia({
+            video: true,
+            audio: true,
+          });
+        }
+
+        setLocalStream(mediaStream);
+
+        // Create tracks using Agora methods
+        cameraTrack = await AgoraRTC.createCameraVideoTrack();
+        microphoneTrack = await AgoraRTC.createMicrophoneAudioTrack();
+
+        setLocalVideoTrack(cameraTrack);
+        setLocalAudioTrack(microphoneTrack);
+        setIsVideoEnabled(true);
+        setIsAudioEnabled(true);
+        setCameraPermissionDenied(false);
+      } catch (error: any) {
+        console.error("Error getting media devices:", error);
+        setCameraPermissionDenied(true);
+
+        if (
+          error.name === "NotAllowedError" ||
+          error.name === "PermissionDeniedError"
+        ) {
+          toast.error(
+            "Please allow camera and microphone access to start streaming"
+          );
+        } else if (
+          error.name === "NotFoundError" ||
+          error.name === "DevicesNotFoundError"
+        ) {
+          toast.error("No camera or microphone found on your device");
+        } else if (
+          error.name === "NotReadableError" ||
+          error.name === "TrackStartError"
+        ) {
+          toast.error(
+            "Camera is already in use by another application. Please close other apps using your camera."
+          );
+        } else {
+          toast.error(
+            "Failed to access camera/microphone: " +
+              (error.message || "Unknown error")
+          );
+        }
+        throw error;
+      }
 
       // Join channel as broadcaster
       await clientRef.current!.join(
@@ -530,28 +597,29 @@ const Live = () => {
       // Publish local tracks
       await clientRef.current!.publish([cameraTrack, microphoneTrack]);
 
-      // Play local video preview with delay to ensure container is ready
-      setTimeout(() => {
-        if (localVideoContainerRef.current) {
-          // Clear container first
-          localVideoContainerRef.current.innerHTML = "";
-          cameraTrack.play(localVideoContainerRef.current);
-          console.log("Local video playing in container");
-        } else {
-          console.error("Local video container not found");
-        }
-      }, 500);
+      // Play local video preview
+      if (localVideoContainerRef.current && cameraTrack) {
+        // Clear container first
+        localVideoContainerRef.current.innerHTML = "";
+        const videoElement = document.createElement("div");
+        videoElement.className = "w-full h-full";
+        localVideoContainerRef.current.appendChild(videoElement);
+        cameraTrack.play(videoElement);
+        console.log("Local video playing in container");
+      }
 
       setIsJoined(true);
       console.log("Broadcaster setup complete");
     } catch (error: any) {
       console.error("Error setting up broadcaster:", error);
-      if (error.name === "NOT_SUPPORTED") {
-        toast.error("Browser doesn't support WebRTC or camera access");
-      } else if (error.name === "PERMISSION_DENIED") {
-        toast.error("Please allow camera and microphone access");
+      if (error.message?.includes("No camera found")) {
+        toast.error("No camera found on your device");
+      } else if (error.message?.includes("already in use")) {
+        toast.error("Camera is already in use by another application");
       } else {
-        toast.error("Failed to setup broadcaster: " + error.message);
+        toast.error(
+          "Failed to setup broadcaster: " + (error.message || "Unknown error")
+        );
       }
       throw error;
     }
@@ -562,33 +630,58 @@ const Live = () => {
     setIsLoading(true);
     try {
       const token = getToken();
+      const stream = streams.find((s) => s.id === streamId);
 
-      // 1. Start the stream on backend
-      const startResponse = await fetch(
-        `${BASE_URL}/livestream/${streamId}/start`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+      // Check if stream is already live
+      if (stream?.isLive) {
+        toast.info("Stream is already live. Joining as broadcaster...");
+
+        // Get broadcaster token and join
+        const tokenData = await getAgoraToken(streamId, "broadcaster");
+        await setupBroadcaster(tokenData);
+
+        setIsBroadcasting(true);
+        setActiveStream(stream);
+        toast.success("Joined existing live stream!");
+      } else {
+        // 1. Start the stream on backend
+        const startResponse = await fetch(
+          `${BASE_URL}/livestream/${streamId}/start`,
+          {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        const startData = await startResponse.json();
+
+        if (!startData.success) {
+          // If stream is already live, join it
+          if (startData.message?.includes("already live")) {
+            toast.info("Stream is already live. Joining as broadcaster...");
+            const tokenData = await getAgoraToken(streamId, "broadcaster");
+            await setupBroadcaster(tokenData);
+
+            setIsBroadcasting(true);
+            setActiveStream(stream || null);
+            toast.success("Joined existing live stream!");
+          } else {
+            throw new Error(startData.message);
+          }
+        } else {
+          // 2. Get broadcaster token
+          const tokenData = await getAgoraToken(streamId, "broadcaster");
+
+          // 3. Setup broadcaster
+          await setupBroadcaster(tokenData);
+
+          setIsBroadcasting(true);
+          setActiveStream(startData.data);
+          toast.success("Live broadcast started!");
         }
-      );
-
-      const startData = await startResponse.json();
-
-      if (!startData.success) {
-        throw new Error(startData.message);
       }
-
-      // 2. Get broadcaster token
-      const tokenData = await getAgoraToken(streamId, "broadcaster");
-
-      // 3. Setup broadcaster
-      await setupBroadcaster(tokenData);
-
-      setIsBroadcasting(true);
-      setActiveStream(startData.data);
-      toast.success("Live broadcast started!");
 
       fetchStreams();
     } catch (error: any) {
@@ -624,6 +717,11 @@ const Live = () => {
         localAudioTrack.stop();
         localAudioTrack.close();
         setLocalAudioTrack(null);
+      }
+
+      if (localStream) {
+        localStream.getTracks().forEach((track) => track.stop());
+        setLocalStream(null);
       }
 
       // 2. Leave channel
@@ -807,6 +905,29 @@ const Live = () => {
     return stream.streamer.id === currentUserId;
   };
 
+  // Test camera function
+  const testCamera = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: true,
+        audio: true,
+      });
+      const videoElement = document.createElement("video");
+      videoElement.srcObject = stream;
+      videoElement.onloadedmetadata = () => {
+        videoElement.play();
+        toast.success("Camera test successful!");
+        // Stop the stream after test
+        setTimeout(() => {
+          stream.getTracks().forEach((track) => track.stop());
+        }, 3000);
+      };
+    } catch (error) {
+      console.error("Camera test failed:", error);
+      toast.error("Camera test failed. Please check camera permissions.");
+    }
+  };
+
   return (
     <div className="container mx-auto p-4">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
@@ -827,6 +948,13 @@ const Live = () => {
               "Refresh"
             )}
           </Button>
+
+          {cameraPermissionDenied && (
+            <Button variant="outline" onClick={testCamera}>
+              <Video className="w-4 h-4 mr-2" />
+              Test Camera
+            </Button>
+          )}
 
           <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
             <DialogTrigger asChild>
@@ -947,6 +1075,28 @@ const Live = () => {
               </div>
             </CardContent>
           </Card>
+        </div>
+      )}
+
+      {cameraPermissionDenied && (
+        <div className="mb-4 p-4 bg-yellow-100 border border-yellow-400 rounded-lg">
+          <div className="flex items-center">
+            <svg
+              className="w-5 h-5 text-yellow-600 mr-2"
+              fill="currentColor"
+              viewBox="0 0 20 20"
+            >
+              <path
+                fillRule="evenodd"
+                d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                clipRule="evenodd"
+              />
+            </svg>
+            <p className="text-yellow-700">
+              Camera permission is required for streaming. Please allow camera
+              access in your browser settings.
+            </p>
+          </div>
         </div>
       )}
 
@@ -1148,12 +1298,9 @@ const Live = () => {
                             <div className="text-center">
                               <Video className="w-16 h-16 mx-auto text-gray-400 mb-4" />
                               <p className="text-gray-300">
-                                Waiting for stream to start...
-                              </p>
-                              <p className="text-sm text-gray-400 mt-2">
                                 {isJoined
-                                  ? "Connected, waiting for video"
-                                  : "Not connected"}
+                                  ? "Connected, waiting for broadcaster to start video..."
+                                  : "Not connected to stream"}
                               </p>
                             </div>
                           </div>
