@@ -18,6 +18,7 @@ import ProfileOverviewSkeletons from "./skeletons/ProfileOverviewSkeletons";
 import ProfileSettingsSkeletons, {
   SettingsSkeletons,
 } from "./skeletons/ProfileSettingsSkeletons";
+import Live from "./Live";
 
 export default function ProfilePage() {
   const [isEditing, setIsEditing] = useState(false);
@@ -126,6 +127,7 @@ export default function ProfilePage() {
                     {user?.verified ? "Verified User" : "Unverified User"}
                   </Badge>
                 </div>
+                {/* <Live /> */}
               </div>
 
               <Separator />
@@ -156,6 +158,7 @@ export default function ProfilePage() {
 
         {/* Profile Settings */}
         <div className="lg:col-span-2 space-y-6">
+          <Live />
           {/* Personal Information */}
           {userDataIsLoading ? (
             <ProfileSettingsSkeletons />
