@@ -96,8 +96,8 @@ const Live = () => {
   const [remoteUsers, setRemoteUsers] = useState<Map<string, RemoteUser>>(
     new Map()
   );
-  const [isVideoEnabled, setIsVideoEnabled] = useState(true);
-  const [isAudioEnabled, setIsAudioEnabled] = useState(true);
+  const [isVideoEnabled, setIsVideoEnabled] = useState(false);
+  const [isAudioEnabled, setIsAudioEnabled] = useState(false);
   const [isChatEnabled, setIsChatEnabled] = useState(true);
   const [message, setMessage] = useState("");
   const [chatMessages, setChatMessages] = useState<
