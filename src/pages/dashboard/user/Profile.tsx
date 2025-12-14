@@ -19,6 +19,7 @@ import ProfileSettingsSkeletons, {
   SettingsSkeletons,
 } from "./skeletons/ProfileSettingsSkeletons";
 import Live from "./Live";
+import ChatContainer from "./ChatContainer";
 
 export default function ProfilePage() {
   const [isEditing, setIsEditing] = useState(false);
@@ -158,6 +159,7 @@ export default function ProfilePage() {
 
         {/* Profile Settings */}
         <div className="lg:col-span-2 space-y-6">
+          <ChatContainer />
           <Live />
           {/* Personal Information */}
           {userDataIsLoading ? (

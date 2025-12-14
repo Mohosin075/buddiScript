@@ -77,14 +77,14 @@ npm install
 2. Create a `.env` file in the root (example variables below):
 
 ```env
-VITE_API_BASE_URL=http://localhost:5000/api/v1
+VITE_BASE_URL_URL=http://localhost:5000/api/v1
 VITE_SOCKET_URL=http://localhost:5000
 VITE_GOOGLE_CLIENT_ID=your_google_client_id
 ```
 
 Notes:
 
-- Use `VITE_API_BASE_URL` for the API base URL (backend default: :5000/api/v1)
+- Use `VITE_BASE_URL_URL` for the API base URL (backend default: :5000/api/v1)
 - Ensure `VITE_SOCKET_URL` is the Socket server URL (use same host as API for local dev)
 
 > **Note:** The frontend URL must be added under **Authorized JavaScript Origins** in the Google OAuth console.
@@ -168,7 +168,7 @@ Example concept:
 
 ```ts
 axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL,
+  baseURL: import.meta.env.VITE_BASE_URL_URL,
   withCredentials: true,
 });
 ```
