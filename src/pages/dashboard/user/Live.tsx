@@ -2,25 +2,21 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Video,
   User,
-  Users,
-  Clock,
-  Play,
   Square,
-  Eye,
   EyeOff,
   Mic,
   MicOff,
-  MessageSquare,
-  Plus,
   Loader2,
+  Calendar,
+  Clock,
+  Lock,
+  Globe,
 } from "lucide-react";
 import AgoraRTC from "agora-rtc-sdk-ng";
 import type {
@@ -42,6 +38,15 @@ import {
 } from "@/components/ui/dialog";
 import { BASE_URL } from "@/lib/Base_URL";
 import { jwtDecode } from "jwt-decode";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 
 interface Stream {
   id: string;
@@ -65,14 +70,23 @@ interface Stream {
   currentViewers: number;
   maxViewers: number;
   streamType: "public" | "private" | "ticketed";
+  streamingMode?: "communication" | "live";
   scheduledStartTime?: string;
   liveStartedAt?: string;
   isUpcoming: boolean;
   isActive: boolean;
+  requiresApproval: boolean;
+  tags: string[];
+  thumbnail?: string;
+  playbackUrl?: string;
+  hlsUrl?: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 interface JwtPayload {
   authId: string;
+  userId: string;
   email: string;
   role: string;
 }
@@ -81,6 +95,15 @@ interface RemoteUser {
   uid: string;
   videoTrack?: IRemoteVideoTrack;
   audioTrack?: IRemoteAudioTrack;
+}
+
+interface AgoraTokenResponse {
+  token: string;
+  channelName: string;
+  uid: number;
+  role: "publisher" | "subscriber";
+  expireTime: number;
+  streamingMode: string;
 }
 
 const Live = () => {
@@ -98,19 +121,25 @@ const Live = () => {
   );
   const [isVideoEnabled, setIsVideoEnabled] = useState(true);
   const [isAudioEnabled, setIsAudioEnabled] = useState(true);
-  const [isChatEnabled, setIsChatEnabled] = useState(true);
-  const [message, setMessage] = useState("");
-  const [chatMessages, setChatMessages] = useState<
-    Array<{ user: string; message: string; time: string }>
-  >([]);
+
+  // Stream creation form
   const [newStreamTitle, setNewStreamTitle] = useState("");
   const [newStreamDescription, setNewStreamDescription] = useState("");
+  const [newStreamType, setNewStreamType] = useState<
+    "public" | "private" | "ticketed"
+  >("public");
+  const [newStreamTags, setNewStreamTags] = useState<string>("");
+  const [newStreamMaxViewers, setNewStreamMaxViewers] =
+    useState<string>("10000");
+  const [requiresApproval, setRequiresApproval] = useState(false);
+  const [chatEnabled, setChatEnabled] = useState(true);
+  const [isRecorded, setIsRecorded] = useState(false);
+  const [scheduledStartTime, setScheduledStartTime] = useState<string>("");
+
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
-  const [isJoined, setIsJoined] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
-  const [cameraPermissionDenied, setCameraPermissionDenied] = useState(false);
 
   const clientRef = useRef<IAgoraRTCClient | null>(null);
   const localVideoContainerRef = useRef<HTMLDivElement>(null);
@@ -129,7 +158,7 @@ const Live = () => {
 
     try {
       const decoded = jwtDecode<JwtPayload>(token);
-      return decoded.authId;
+      return decoded.authId || decoded.userId;
     } catch (error) {
       console.error("Error decoding token:", error);
       return null;
@@ -163,7 +192,6 @@ const Live = () => {
         clientRef.current.on("user-published", async (user, mediaType) => {
           console.log("User published:", user.uid, mediaType);
 
-          // Subscribe to the remote user
           try {
             await clientRef.current!.subscribe(user, mediaType);
             console.log("Subscribed to user:", user.uid, mediaType);
@@ -171,28 +199,22 @@ const Live = () => {
             if (mediaType === "video") {
               const videoTrack = user.videoTrack;
               if (videoTrack) {
-                console.log("Got remote video track for user:", user.uid);
-
                 const newRemoteUser: RemoteUser = {
                   uid: user.uid.toString(),
                   videoTrack,
                 };
 
-                // Update ref and state
                 remoteUsersRef.current.set(user.uid.toString(), newRemoteUser);
                 setRemoteUsers(new Map(remoteUsersRef.current));
 
-                // Play the video track
                 setTimeout(() => {
                   if (remoteVideoContainerRef.current) {
-                    // Clear container first
                     remoteVideoContainerRef.current.innerHTML = "";
                     const videoElement = document.createElement("div");
                     videoElement.id = `remote-video-${user.uid}`;
                     videoElement.className = "w-full h-full";
                     remoteVideoContainerRef.current.appendChild(videoElement);
                     videoTrack.play(videoElement);
-                    console.log("Playing remote video for user:", user.uid);
                   }
                 }, 100);
               }
@@ -202,7 +224,6 @@ const Live = () => {
               const audioTrack = user.audioTrack;
               if (audioTrack) {
                 audioTrack.play();
-                console.log("Playing remote audio for user:", user.uid);
               }
             }
           } catch (error) {
@@ -222,7 +243,6 @@ const Live = () => {
             remoteUsersRef.current.delete(user.uid.toString());
             setRemoteUsers(new Map(remoteUsersRef.current));
 
-            // Remove video element
             const videoElement = document.getElementById(
               `remote-video-${user.uid}`
             );
@@ -249,7 +269,6 @@ const Live = () => {
           remoteUsersRef.current.delete(user.uid.toString());
           setRemoteUsers(new Map(remoteUsersRef.current));
 
-          // Remove video element
           const videoElement = document.getElementById(
             `remote-video-${user.uid}`
           );
@@ -315,7 +334,7 @@ const Live = () => {
 
       remoteUsersRef.current.clear();
       setRemoteUsers(new Map());
-      setIsJoined(false);
+
       setIsBroadcasting(false);
 
       // Clear video containers
@@ -330,15 +349,19 @@ const Live = () => {
     }
   };
 
-  // Fetch live streams
-  const fetchStreams = async () => {
+  // Fetch live streams with pagination
+  const fetchStreams = async (page = 1, limit = 20) => {
+    setIsLoading(true);
     try {
       const token = getToken();
-      const response = await fetch(`${BASE_URL}/livestream`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const response = await fetch(
+        `${BASE_URL}/livestream?page=${page}&limit=${limit}&sortBy=createdAt&sortOrder=desc`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
       const data = await response.json();
       if (data.success) {
         setStreams(data.data);
@@ -348,6 +371,8 @@ const Live = () => {
     } catch (error) {
       console.error("Error fetching streams:", error);
       toast.error("Failed to load streams");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -361,31 +386,60 @@ const Live = () => {
     setIsCreatingStream(true);
     try {
       const token = getToken();
+
+      const payload: any = {
+        title: newStreamTitle,
+        description: newStreamDescription,
+        streamType: newStreamType,
+        maxViewers: parseInt(newStreamMaxViewers) || 10000,
+        chatEnabled: chatEnabled,
+        isRecorded: isRecorded,
+        requiresApproval: requiresApproval,
+        eventId: "693f22de052f55bd278c40c8",
+      };
+
+      // Add tags if provided
+      if (newStreamTags.trim()) {
+        payload.tags = newStreamTags
+          .split(",")
+          .map((tag) => tag.trim())
+          .filter((tag) => tag);
+      }
+
+      // Add scheduled start time if provided
+      if (scheduledStartTime) {
+        payload.scheduledStartTime = scheduledStartTime;
+      }
+
       const response = await fetch(`${BASE_URL}/livestream`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          eventId: "692762edce1f8de66691cfd8",
-          title: newStreamTitle,
-          description: newStreamDescription,
-          streamType: "public",
-          chatEnabled: true,
-        }),
+        body: JSON.stringify(payload),
       });
 
       const data = await response.json();
 
       if (data.success) {
         toast.success("Stream created successfully!");
+
+        // Reset form
         setNewStreamTitle("");
         setNewStreamDescription("");
+        setNewStreamType("public");
+        setNewStreamTags("");
+        setNewStreamMaxViewers("10000");
+        setRequiresApproval(false);
+        setChatEnabled(true);
+        setIsRecorded(false);
+        setScheduledStartTime("");
+
         setShowCreateDialog(false);
         fetchStreams();
       } else {
-        throw new Error(data.message);
+        throw new Error(data.message || "Failed to create stream");
       }
     } catch (error: any) {
       console.error("Error creating stream:", error);
@@ -399,7 +453,7 @@ const Live = () => {
   const getAgoraToken = async (
     streamId: string,
     role: "broadcaster" | "viewer"
-  ) => {
+  ): Promise<AgoraTokenResponse> => {
     try {
       const token = getToken();
       const response = await fetch(
@@ -423,80 +477,12 @@ const Live = () => {
     }
   };
 
-  // Quick Start: Create and start a stream immediately
-  const handleQuickStart = async () => {
-    setIsLoading(true);
-    try {
-      const token = getToken();
-
-      // 1. Create a stream
-      const createResponse = await fetch(`${BASE_URL}/livestream`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          eventId: "692762edce1f8de66691cfd8",
-          title: "Live Broadcast",
-          description: "Started broadcasting now",
-          streamType: "public",
-          chatEnabled: true,
-        }),
-      });
-
-      const createData = await createResponse.json();
-
-      if (!createData.success) {
-        throw new Error(createData.message);
-      }
-
-      const streamId = createData.data._id || createData.data.id;
-
-      // 2. Start the stream on backend
-      const startResponse = await fetch(
-        `${BASE_URL}/livestream/${streamId}/start`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      const startData = await startResponse.json();
-
-      if (!startData.success) {
-        throw new Error(startData.message);
-      }
-
-      // 3. Get broadcaster token
-      const tokenData = await getAgoraToken(streamId, "broadcaster");
-
-      // 4. Initialize and setup local tracks
-      await setupBroadcaster(tokenData);
-
-      setIsBroadcasting(true);
-      setActiveStream(startData.data);
-      toast.success("Live broadcast started!");
-
-      // Refresh streams
-      fetchStreams();
-    } catch (error: any) {
-      console.error("Error starting broadcast:", error);
-      toast.error(error.message || "Failed to start broadcast");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   // Setup broadcaster with local tracks
-  const setupBroadcaster = async (tokenData: any) => {
+  const setupBroadcaster = async (tokenData: AgoraTokenResponse) => {
     try {
       // Initialize client if not already
       if (!isInitialized) {
         initializeAgoraClient();
-        // Wait a bit for initialization
         await new Promise((resolve) => setTimeout(resolve, 100));
       }
 
@@ -510,39 +496,25 @@ const Live = () => {
       // Cleanup existing tracks
       await cleanupAgora();
 
-      // Create local tracks with simple configuration
+      // Create local tracks
       let cameraTrack: ICameraVideoTrack;
       let microphoneTrack: IMicrophoneAudioTrack;
 
       try {
-        // Request camera and microphone permissions with fallback
-        let mediaStream: MediaStream;
-
-        try {
-          mediaStream = await navigator.mediaDevices.getUserMedia({
-            video: {
-              width: { ideal: 640 },
-              height: { ideal: 480 },
-              frameRate: { ideal: 24 },
-            },
-            audio: {
-              echoCancellation: true,
-              noiseSuppression: true,
-              autoGainControl: true,
-            },
-          });
-        } catch (videoError) {
-          // Try without video constraints
-          console.log("Trying without video constraints");
-          mediaStream = await navigator.mediaDevices.getUserMedia({
-            video: true,
-            audio: true,
-          });
-        }
+        const mediaStream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            width: { ideal: 1280 },
+            height: { ideal: 720 },
+            frameRate: { ideal: 30 },
+          },
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true,
+          },
+        });
 
         setLocalStream(mediaStream);
-
-        // Create tracks using Agora methods
         cameraTrack = await AgoraRTC.createCameraVideoTrack();
         microphoneTrack = await AgoraRTC.createMicrophoneAudioTrack();
 
@@ -550,10 +522,8 @@ const Live = () => {
         setLocalAudioTrack(microphoneTrack);
         setIsVideoEnabled(true);
         setIsAudioEnabled(true);
-        setCameraPermissionDenied(false);
       } catch (error: any) {
         console.error("Error getting media devices:", error);
-        setCameraPermissionDenied(true);
 
         if (
           error.name === "NotAllowedError" ||
@@ -584,43 +554,49 @@ const Live = () => {
       }
 
       // Join channel as broadcaster
-      await clientRef.current!.join(
-        "9476d1c9b94d48f3a6f312798aa6c3a6",
-        tokenData.channelName,
-        tokenData.token,
-        null
-      );
-
-      // Set client role to host
-      await clientRef.current!.setClientRole("host");
-
-      // Publish local tracks
-      await clientRef.current!.publish([cameraTrack, microphoneTrack]);
-
-      // Play local video preview
-      if (localVideoContainerRef.current && cameraTrack) {
-        // Clear container first
-        localVideoContainerRef.current.innerHTML = "";
-        const videoElement = document.createElement("div");
-        videoElement.className = "w-full h-full";
-        localVideoContainerRef.current.appendChild(videoElement);
-        cameraTrack.play(videoElement);
-        console.log("Local video playing in container");
+      // Note: App ID is now handled by backend token generation
+      // We need to set the mode based on streamingMode from backend
+      if (tokenData.streamingMode === "communication") {
+        // For interactive streaming
+        await clientRef.current!.join(
+          "9476d1c9b94d48f3a6f312798aa6c3a6",
+          tokenData.channelName,
+          tokenData.token,
+          tokenData.uid || null
+        );
+      } else {
+        // For standard live streaming
+        await clientRef.current!.join(
+          "9476d1c9b94d48f3a6f312798aa6c3a6",
+          tokenData.channelName,
+          tokenData.token,
+          tokenData.uid || null
+        );
       }
 
-      setIsJoined(true);
+      // Set client role based on role from token
+      await clientRef.current!.setClientRole(
+        tokenData.role === "publisher" ? "host" : "audience"
+      );
+
+      // Publish local tracks if broadcaster
+      if (tokenData.role === "publisher") {
+        await clientRef.current!.publish([cameraTrack, microphoneTrack]);
+
+        // Play local video preview
+        if (localVideoContainerRef.current && cameraTrack) {
+          localVideoContainerRef.current.innerHTML = "";
+          const videoElement = document.createElement("div");
+          videoElement.className = "w-full h-full";
+          localVideoContainerRef.current.appendChild(videoElement);
+          cameraTrack.play(videoElement);
+        }
+      }
+
       console.log("Broadcaster setup complete");
     } catch (error: any) {
       console.error("Error setting up broadcaster:", error);
-      if (error.message?.includes("No camera found")) {
-        toast.error("No camera found on your device");
-      } else if (error.message?.includes("already in use")) {
-        toast.error("Camera is already in use by another application");
-      } else {
-        toast.error(
-          "Failed to setup broadcaster: " + (error.message || "Unknown error")
-        );
-      }
+      toast.error(error.message || "Failed to setup broadcaster");
       throw error;
     }
   };
@@ -632,14 +608,22 @@ const Live = () => {
       const token = getToken();
       const stream = streams.find((s) => s.id === streamId);
 
+      if (!stream) {
+        toast.error("Stream not found");
+        return;
+      }
+
+      // Check if user is the streamer
+      if (!isUserStreamer(stream)) {
+        toast.error("Only the streamer can start the broadcast");
+        return;
+      }
+
       // Check if stream is already live
       if (stream?.isLive) {
         toast.info("Stream is already live. Joining as broadcaster...");
-
-        // Get broadcaster token and join
         const tokenData = await getAgoraToken(streamId, "broadcaster");
         await setupBroadcaster(tokenData);
-
         setIsBroadcasting(true);
         setActiveStream(stream);
         toast.success("Joined existing live stream!");
@@ -658,14 +642,12 @@ const Live = () => {
         const startData = await startResponse.json();
 
         if (!startData.success) {
-          // If stream is already live, join it
           if (startData.message?.includes("already live")) {
             toast.info("Stream is already live. Joining as broadcaster...");
             const tokenData = await getAgoraToken(streamId, "broadcaster");
             await setupBroadcaster(tokenData);
-
             setIsBroadcasting(true);
-            setActiveStream(stream || null);
+            setActiveStream(stream);
             toast.success("Joined existing live stream!");
           } else {
             throw new Error(startData.message);
@@ -751,7 +733,6 @@ const Live = () => {
 
       // 4. Cleanup state
       setIsBroadcasting(false);
-      setIsJoined(false);
       setActiveStream(null);
       remoteUsersRef.current.clear();
       setRemoteUsers(new Map());
@@ -786,7 +767,6 @@ const Live = () => {
       // Initialize client if not already
       if (!isInitialized) {
         initializeAgoraClient();
-        // Wait a bit for initialization
         await new Promise((resolve) => setTimeout(resolve, 100));
       }
 
@@ -803,7 +783,7 @@ const Live = () => {
         "9476d1c9b94d48f3a6f312798aa6c3a6",
         tokenData.channelName,
         tokenData.token,
-        null
+        tokenData.uid || null
       );
 
       // Set client role to audience
@@ -811,13 +791,21 @@ const Live = () => {
 
       const stream = streams.find((s) => s.id === streamId);
       setActiveStream(stream || null);
-      setIsJoined(true);
+
       toast.success("Joined stream as viewer");
 
       console.log("Viewer joined successfully, waiting for broadcaster...");
     } catch (error: any) {
       console.error("Error joining stream:", error);
-      toast.error(error.message || "Failed to join stream");
+
+      // Handle specific authorization errors
+      if (error.message?.includes("not authorized")) {
+        toast.error("You are not authorized to view this private stream");
+      } else if (error.message?.includes("Stream is not active")) {
+        toast.error("This stream is not currently active");
+      } else {
+        toast.error(error.message || "Failed to join stream");
+      }
     } finally {
       setIsLoading(false);
     }
@@ -875,725 +863,529 @@ const Live = () => {
     }
   };
 
-  // Send chat message
-  const sendMessage = () => {
-    if (message.trim()) {
-      const newMessage = {
-        user: "You",
-        message: message.trim(),
-        time: new Date().toLocaleTimeString(),
-      };
-      setChatMessages((prev) => [...prev, newMessage]);
-      setMessage("");
-    }
-  };
-
-  // Format date
-  const formatDate = (dateString: string) => {
-    if (!dateString) return "N/A";
-    return new Date(dateString).toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
-
   // Check if user is the streamer
   const isUserStreamer = (stream: Stream) => {
     if (!currentUserId) return false;
     return stream.streamer.id === currentUserId;
   };
 
-  // Test camera function
-  const testCamera = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: true,
-        audio: true,
-      });
-      const videoElement = document.createElement("video");
-      videoElement.srcObject = stream;
-      videoElement.onloadedmetadata = () => {
-        videoElement.play();
-        toast.success("Camera test successful!");
-        // Stop the stream after test
-        setTimeout(() => {
-          stream.getTracks().forEach((track) => track.stop());
-        }, 3000);
-      };
-    } catch (error) {
-      console.error("Camera test failed:", error);
-      toast.error("Camera test failed. Please check camera permissions.");
+  // Format date for display
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return "Not scheduled";
+    const date = new Date(dateString);
+    return (
+      date.toLocaleDateString() +
+      " " +
+      date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+    );
+  };
+
+  // Get stream type icon
+  const getStreamTypeIcon = (type: string) => {
+    switch (type) {
+      case "private":
+        return <Lock className="w-3 h-3" />;
+      case "ticketed":
+        return <Square className="w-3 h-3" />;
+      default:
+        return <Globe className="w-3 h-3" />;
     }
   };
 
+  // Reset create stream form
+  const resetCreateForm = () => {
+    setNewStreamTitle("");
+    setNewStreamDescription("");
+    setNewStreamType("public");
+    setNewStreamTags("");
+    setNewStreamMaxViewers("10000");
+    setRequiresApproval(false);
+    setChatEnabled(true);
+    setIsRecorded(false);
+    setScheduledStartTime("");
+  };
+
   return (
-    <div className="container mx-auto p-4">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-        <div>
-          <h1 className="text-3xl font-bold">Live Streaming</h1>
-          <p className="text-gray-500">Go live instantly with one click</p>
-        </div>
+    <div className="h-full w-full bg-gray-950 relative text-white overflow-hidden group font-sans">
+      {activeStream || isBroadcasting ? (
+        <>
+          {/* Video Container Layer */}
+          <div className="absolute inset-0 z-0 bg-black">
+            {/* Remote Video (Viewers see this) */}
+            <div
+              ref={remoteVideoContainerRef}
+              className={`w-full h-full object-cover transition-opacity duration-500 ${
+                isBroadcasting ? "opacity-0" : "opacity-100"
+              }`}
+            />
+            {/* Local Video (Broadcaster sees this) */}
+            <div
+              ref={localVideoContainerRef}
+              className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-500 ${
+                isBroadcasting ? "opacity-100" : "opacity-0 pointer-events-none"
+              }`}
+            />
 
-        <div className="flex flex-wrap gap-2">
-          <Button
-            variant="outline"
-            onClick={() => fetchStreams()}
-            disabled={isLoading}
-          >
-            {isLoading ? (
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-            ) : (
-              "Refresh"
-            )}
-          </Button>
-
-          {cameraPermissionDenied && (
-            <Button variant="outline" onClick={testCamera}>
-              <Video className="w-4 h-4 mr-2" />
-              Test Camera
-            </Button>
-          )}
-
-          <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-            <DialogTrigger asChild>
-              <Button variant="outline">
-                <Plus className="w-4 h-4 mr-2" />
-                Create Stream
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Create New Stream</DialogTitle>
-                <DialogDescription>
-                  Create a stream to go live
-                </DialogDescription>
-              </DialogHeader>
-              <div className="space-y-4 py-4">
-                <div className="space-y-2">
-                  <Label htmlFor="title">Stream Title *</Label>
-                  <Input
-                    id="title"
-                    placeholder="Enter stream title"
-                    value={newStreamTitle}
-                    onChange={(e) => setNewStreamTitle(e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="description">Description</Label>
-                  <Input
-                    id="description"
-                    placeholder="Enter stream description"
-                    value={newStreamDescription}
-                    onChange={(e) => setNewStreamDescription(e.target.value)}
-                  />
-                </div>
+            {/* Placeholder if no video */}
+            {!activeStream && !isBroadcasting && !localStream && (
+              <div className="flex flex-col items-center justify-center h-full text-gray-500">
+                <Video className="w-16 h-16 opacity-20 mb-4" />
+                <p>Waiting for stream...</p>
               </div>
-              <DialogFooter>
-                <Button
-                  variant="outline"
-                  onClick={() => setShowCreateDialog(false)}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  onClick={createLiveStream}
-                  disabled={isCreatingStream || !newStreamTitle.trim()}
-                >
-                  {isCreatingStream ? (
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  ) : (
-                    "Create Stream"
-                  )}
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-
-          <Button
-            onClick={handleQuickStart}
-            disabled={isLoading || isBroadcasting}
-            className="bg-red-600 hover:bg-red-700"
-          >
-            {isLoading ? (
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-            ) : (
-              <Play className="w-4 h-4 mr-2" />
             )}
-            Go Live Now
-          </Button>
-        </div>
-      </div>
+          </div>
 
-      {isBroadcasting && (
-        <div className="mb-6">
-          <Card className="border-red-500">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse mr-3"></div>
-                  <span className="font-bold">You are live!</span>
-                  <span className="text-sm text-gray-500 ml-2">
-                    {remoteUsers.size} viewer{remoteUsers.size !== 1 ? "s" : ""}
+          {/* Gradient Overlay Layer */}
+          <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-black/90 z-10 pointer-events-none" />
+
+          {/* Top Info Bar */}
+          <div className="absolute top-0 left-0 right-0 p-4 md:p-6 flex justify-between items-start z-20 pointer-events-none">
+            <div className="flex items-center gap-3">
+              {(isBroadcasting || (activeStream && activeStream.isLive)) && (
+                <div className="bg-red-600 text-white px-3 py-1 rounded-full flex items-center gap-2 animate-pulse shadow-lg shadow-red-900/20">
+                  <div className="w-2 h-2 bg-white rounded-full" />
+                  <span className="text-xs font-bold tracking-wider uppercase">
+                    LIVE
                   </span>
                 </div>
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={toggleVideo}
-                    disabled={!localVideoTrack}
-                  >
-                    {isVideoEnabled ? (
-                      <Video className="w-4 h-4" />
-                    ) : (
-                      <EyeOff className="w-4 h-4" />
-                    )}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={toggleAudio}
-                    disabled={!localAudioTrack}
-                  >
-                    {isAudioEnabled ? (
-                      <Mic className="w-4 h-4" />
-                    ) : (
-                      <MicOff className="w-4 h-4" />
-                    )}
-                  </Button>
-                  <Button
-                    variant="destructive"
-                    onClick={stopBroadcast}
-                    disabled={isLoading}
-                  >
-                    <Square className="w-4 h-4 mr-2" />
-                    End Stream
-                  </Button>
+              )}
+              {activeStream && (
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center bg-black/40 backdrop-blur-md px-3 py-1 rounded-full border border-white/10">
+                    {getStreamTypeIcon(activeStream.streamType)}
+                    <span className="text-xs ml-1 capitalize">
+                      {activeStream.streamType}
+                    </span>
+                  </div>
+                  {activeStream.requiresApproval && (
+                    <Badge
+                      variant="outline"
+                      className="bg-yellow-500/20 text-yellow-300 border-yellow-500/30"
+                    >
+                      Approval Required
+                    </Badge>
+                  )}
+                </div>
+              )}
+            </div>
+
+            <div className="flex items-center gap-3">
+              <div className="flex items-center bg-black/40 backdrop-blur-md px-4 py-1.5 rounded-full border border-white/10 shadow-xl">
+                <div className="w-2 h-2 bg-blue-500 rounded-full mr-2 shadow-[0_0_10px_rgba(59,130,246,0.5)]" />
+                <span className="text-sm font-semibold tracking-wide">
+                  {remoteUsers.size + (isBroadcasting ? 0 : 1)} watching
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Stream Info Sidebar */}
+          <div className="absolute left-4 top-20 z-20 w-72 bg-black/40 backdrop-blur-md rounded-xl border border-white/10 p-4 hidden md:block">
+            {activeStream && (
+              <>
+                <h3 className="font-bold text-lg mb-3">{activeStream.title}</h3>
+                <p className="text-sm text-gray-300 mb-4">
+                  {activeStream.description}
+                </p>
+
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <User className="w-4 h-4 text-gray-400" />
+                    <span className="text-sm">
+                      Host: {activeStream.streamer.name}
+                    </span>
+                  </div>
+
+                  {activeStream.scheduledStartTime && (
+                    <div className="flex items-center gap-2">
+                      <Calendar className="w-4 h-4 text-gray-400" />
+                      <span className="text-sm">
+                        {formatDate(activeStream.scheduledStartTime)}
+                      </span>
+                    </div>
+                  )}
+
+                  {activeStream.tags && activeStream.tags.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mt-2">
+                      {activeStream.tags.map((tag, index) => (
+                        <Badge
+                          key={index}
+                          variant="secondary"
+                          className="text-xs bg-purple-500/20 text-purple-300 border-purple-500/30"
+                        >
+                          {tag}
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* Bottom Info Area */}
+          <div className="absolute bottom-0 left-0 right-0 p-6 z-20 pointer-events-none">
+            <div className="mb-1 transform translate-y-2 group-hover:translate-y-0 transition-transform duration-300">
+              <h1 className="text-3xl md:text-5xl font-black text-white tracking-tight drop-shadow-lg mb-2">
+                {activeStream?.title || newStreamTitle || "Live Stream"}
+              </h1>
+
+              <div className="flex flex-wrap items-center justify-between gap-4">
+                <div className="flex items-center gap-2 text-gray-300 font-medium text-sm md:text-base">
+                  <span className="text-white uppercase tracking-wider font-bold">
+                    Streaming Now
+                  </span>
+                  <span className="w-1 h-1 bg-gray-500 rounded-full" />
+                  <span>{activeStream?.description || "Live Session"}</span>
                 </div>
               </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
+            </div>
+          </div>
 
-      {cameraPermissionDenied && (
-        <div className="mb-4 p-4 bg-yellow-100 border border-yellow-400 rounded-lg">
-          <div className="flex items-center">
-            <svg
-              className="w-5 h-5 text-yellow-600 mr-2"
-              fill="currentColor"
-              viewBox="0 0 20 20"
-            >
-              <path
-                fillRule="evenodd"
-                d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
-                clipRule="evenodd"
-              />
-            </svg>
-            <p className="text-yellow-700">
-              Camera permission is required for streaming. Please allow camera
-              access in your browser settings.
-            </p>
+          {/* Floating Controls (User Interaction) */}
+          <div className="absolute bottom-20 right-4 z-50 flex flex-col gap-3 pointer-events-auto">
+            {!isBroadcasting && (
+              <Button
+                variant="destructive"
+                size="icon"
+                className="rounded-full h-12 w-12 shadow-xl border-2 border-white/10"
+                onClick={leaveViewerStream}
+              >
+                <Square className="h-5 w-5 fill-current" />
+              </Button>
+            )}
+
+            {isBroadcasting && (
+              <>
+                <Button
+                  variant={isVideoEnabled ? "secondary" : "destructive"}
+                  size="icon"
+                  className="rounded-full h-10 w-10 shadow-lg"
+                  onClick={toggleVideo}
+                >
+                  {isVideoEnabled ? (
+                    <Video className="h-4 w-4" />
+                  ) : (
+                    <EyeOff className="h-4 w-4" />
+                  )}
+                </Button>
+                <Button
+                  variant={isAudioEnabled ? "secondary" : "destructive"}
+                  size="icon"
+                  className="rounded-full h-10 w-10 shadow-lg"
+                  onClick={toggleAudio}
+                >
+                  {isAudioEnabled ? (
+                    <Mic className="h-4 w-4" />
+                  ) : (
+                    <MicOff className="h-4 w-4" />
+                  )}
+                </Button>
+                <Button
+                  variant="destructive"
+                  size="icon"
+                  className="rounded-full h-12 w-12 shadow-xl border-2 border-white/10"
+                  onClick={stopBroadcast}
+                >
+                  <Square className="h-5 w-5 fill-current" />
+                </Button>
+              </>
+            )}
+          </div>
+        </>
+      ) : (
+        // List View when no stream is active
+        <div className="absolute inset-0 flex flex-col p-4 overflow-y-auto custom-scrollbar">
+          <div className="flex justify-between items-center mb-6 sticky top-0 bg-gray-950/90 backdrop-blur-sm py-2 z-10">
+            <h2 className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-pink-500 bg-clip-text text-transparent">
+              Live Streams
+            </h2>
+            <div className="flex gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => fetchStreams()}
+                className="border-gray-800 hover:bg-gray-800 text-gray-400"
+              >
+                <Loader2
+                  className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`}
+                />
+              </Button>
+              <Dialog
+                open={showCreateDialog}
+                onOpenChange={(open) => {
+                  setShowCreateDialog(open);
+                  if (!open) resetCreateForm();
+                }}
+              >
+                <DialogTrigger asChild>
+                  <Button
+                    size="sm"
+                    className="bg-purple-600 hover:bg-purple-700 text-white"
+                  >
+                    <Video className="w-4 h-4 mr-2" />
+                    Go Live
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="bg-gray-900 border-gray-800 text-white max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>Create New Live Stream</DialogTitle>
+                    <DialogDescription className="text-gray-400">
+                      Configure your live stream settings
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-4 py-4">
+                    <div className="space-y-2">
+                      <Label className="text-gray-300">Stream Title *</Label>
+                      <Input
+                        value={newStreamTitle}
+                        onChange={(e) => setNewStreamTitle(e.target.value)}
+                        className="bg-gray-950 border-gray-800 text-white"
+                        placeholder="Enter stream title"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-gray-300">Description</Label>
+                      <Textarea
+                        value={newStreamDescription}
+                        onChange={(e) =>
+                          setNewStreamDescription(e.target.value)
+                        }
+                        className="bg-gray-950 border-gray-800 text-white"
+                        placeholder="Describe your stream"
+                        rows={3}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-gray-300">Stream Type</Label>
+                      <Select
+                        value={newStreamType}
+                        onValueChange={(value: any) => setNewStreamType(value)}
+                      >
+                        <SelectTrigger className="bg-gray-950 border-gray-800 text-white">
+                          <SelectValue placeholder="Select stream type" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-gray-900 border-gray-800 text-white">
+                          <SelectItem value="public">Public</SelectItem>
+                          <SelectItem value="private">Private</SelectItem>
+                          <SelectItem value="ticketed">Ticketed</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-gray-300">
+                        Tags (comma separated)
+                      </Label>
+                      <Input
+                        value={newStreamTags}
+                        onChange={(e) => setNewStreamTags(e.target.value)}
+                        className="bg-gray-950 border-gray-800 text-white"
+                        placeholder="music, gaming, tutorial"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-gray-300">Max Viewers</Label>
+                      <Input
+                        value={newStreamMaxViewers}
+                        onChange={(e) => setNewStreamMaxViewers(e.target.value)}
+                        className="bg-gray-950 border-gray-800 text-white"
+                        type="number"
+                        min="1"
+                        max="100000"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-gray-300">
+                        Scheduled Start Time (Optional)
+                      </Label>
+                      <Input
+                        value={scheduledStartTime}
+                        onChange={(e) => setScheduledStartTime(e.target.value)}
+                        className="bg-gray-950 border-gray-800 text-white"
+                        type="datetime-local"
+                      />
+                    </div>
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-gray-300">
+                          Requires Approval
+                        </Label>
+                        <Switch
+                          checked={requiresApproval}
+                          onCheckedChange={setRequiresApproval}
+                          className="data-[state=checked]:bg-purple-600"
+                        />
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <Label className="text-gray-300">Enable Chat</Label>
+                        <Switch
+                          checked={chatEnabled}
+                          onCheckedChange={setChatEnabled}
+                          className="data-[state=checked]:bg-purple-600"
+                        />
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <Label className="text-gray-300">Record Stream</Label>
+                        <Switch
+                          checked={isRecorded}
+                          onCheckedChange={setIsRecorded}
+                          className="data-[state=checked]:bg-purple-600"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  <DialogFooter>
+                    <Button
+                      onClick={createLiveStream}
+                      disabled={!newStreamTitle.trim() || isCreatingStream}
+                      className="bg-purple-600 hover:bg-purple-700 w-full"
+                    >
+                      {isCreatingStream ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Creating...
+                        </>
+                      ) : (
+                        "Create Stream"
+                      )}
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+            </div>
+          </div>
+
+          <div className="grid gap-4">
+            {streams.map((stream) => (
+              <div
+                key={stream.id}
+                className="group flex items-start gap-4 p-4 rounded-xl bg-gray-900/50 hover:bg-gradient-to-r hover:from-purple-900/20 hover:to-pink-900/20 border border-gray-800 hover:border-purple-500/30 transition-all cursor-pointer"
+                onClick={() => {
+                  if (isUserStreamer(stream)) {
+                    startExistingBroadcast(stream.id);
+                  } else {
+                    joinAsViewer(stream.id);
+                  }
+                }}
+              >
+                <div className="relative w-24 h-16 rounded-lg bg-gray-800 flex items-center justify-center overflow-hidden shrink-0 group-hover:scale-105 transition-transform">
+                  {stream.isLive ? (
+                    <div
+                      className="absolute inset-0 bg-cover bg-center"
+                      style={{
+                        backgroundImage: `url(${
+                          stream.thumbnail ||
+                          stream.streamer.avatar ||
+                          "https://images.unsplash.com/photo-1493225255756-d9584f8606e9?w=800&auto=format&fit=crop&q=60"
+                        })`,
+                      }}
+                    >
+                      <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                        <div className="w-2 h-2 bg-red-500 rounded-full animate-ping" />
+                      </div>
+                    </div>
+                  ) : stream.isUpcoming ? (
+                    <div className="absolute inset-0 bg-gradient-to-br from-blue-900/50 to-purple-900/50 flex items-center justify-center">
+                      <Clock className="w-6 h-6 text-blue-400" />
+                    </div>
+                  ) : (
+                    <Video className="w-6 h-6 text-gray-600" />
+                  )}
+                </div>
+
+                <div className="flex-1 min-w-0">
+                  <div className="flex justify-between items-start mb-1">
+                    <h3 className="font-semibold text-white truncate pr-2">
+                      {stream.title}
+                    </h3>
+                    <div className="flex items-center gap-2">
+                      {stream.isLive && (
+                        <span className="text-xs font-bold text-red-500 bg-red-500/10 px-2 py-0.5 rounded-full uppercase flex items-center gap-1">
+                          <div className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse" />
+                          Live
+                        </span>
+                      )}
+                      {stream.isUpcoming && !stream.isLive && (
+                        <Badge
+                          variant="outline"
+                          className="text-xs bg-blue-500/10 text-blue-300 border-blue-500/30"
+                        >
+                          Upcoming
+                        </Badge>
+                      )}
+                      <div className="flex items-center gap-1 text-xs text-gray-400">
+                        {getStreamTypeIcon(stream.streamType)}
+                        <span className="capitalize">{stream.streamType}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <p className="text-sm text-gray-400 truncate mb-2">
+                    {stream.streamer.name}
+                  </p>
+
+                  <div className="flex flex-wrap items-center gap-2 mt-2">
+                    {stream.tags?.slice(0, 3).map((tag, index) => (
+                      <Badge
+                        key={index}
+                        variant="secondary"
+                        className="text-xs bg-gray-800 text-gray-400 hover:bg-gray-750"
+                      >
+                        {tag}
+                      </Badge>
+                    ))}
+
+                    <div className="flex items-center gap-3 text-xs text-gray-500 ml-auto">
+                      <span className="flex items-center">
+                        <User className="w-3 h-3 mr-1" />{" "}
+                        {stream.currentViewers}
+                      </span>
+                      {stream.scheduledStartTime && (
+                        <span className="flex items-center">
+                          <Calendar className="w-3 h-3 mr-1" />
+                          {new Date(
+                            stream.scheduledStartTime
+                          ).toLocaleDateString()}
+                        </span>
+                      )}
+                      {stream.streamStatus === "ended" && (
+                        <Badge
+                          variant="outline"
+                          className="text-xs bg-gray-800 text-gray-400"
+                        >
+                          Ended
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+
+                  {stream.description && (
+                    <p className="text-xs text-gray-500 mt-2 line-clamp-2">
+                      {stream.description}
+                    </p>
+                  )}
+                </div>
+              </div>
+            ))}
+
+            {streams.length === 0 && !isLoading && (
+              <div className="text-center py-10 opacity-50">
+                <Video className="w-12 h-12 mx-auto mb-2" />
+                <p>No active streams found</p>
+                <p className="text-sm text-gray-500 mt-1">
+                  Be the first to start streaming!
+                </p>
+              </div>
+            )}
+
+            {isLoading && streams.length === 0 && (
+              <div className="text-center py-10">
+                <Loader2 className="w-12 h-12 mx-auto mb-2 animate-spin text-purple-500" />
+                <p>Loading streams...</p>
+              </div>
+            )}
           </div>
         </div>
       )}
-
-      <Tabs defaultValue="streams" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="streams">
-            <Video className="w-4 h-4 mr-2" />
-            Live Streams
-          </TabsTrigger>
-          {activeStream && (
-            <TabsTrigger value="broadcast">
-              {isBroadcasting ? (
-                <>
-                  <Play className="w-4 h-4 mr-2" />
-                  Broadcasting
-                </>
-              ) : (
-                <>
-                  <Eye className="w-4 h-4 mr-2" />
-                  Watching
-                </>
-              )}
-            </TabsTrigger>
-          )}
-          <TabsTrigger value="my-streams">
-            <User className="w-4 h-4 mr-2" />
-            My Streams
-          </TabsTrigger>
-        </TabsList>
-
-        {/* All Streams Tab */}
-        <TabsContent value="streams">
-          {streams.length === 0 ? (
-            <Card>
-              <CardContent className="py-8 text-center">
-                <Video className="w-12 h-12 mx-auto text-gray-400 mb-4" />
-                <h3 className="text-lg font-medium mb-2">No live streams</h3>
-                <p className="text-gray-500 mb-4">Be the first to go live!</p>
-                <Button onClick={handleQuickStart}>
-                  <Play className="w-4 h-4 mr-2" />
-                  Start Your First Stream
-                </Button>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {streams.map((stream) => (
-                <Card
-                  key={stream.id}
-                  className="overflow-hidden hover:shadow-lg transition-shadow"
-                >
-                  <CardHeader className="pb-3">
-                    <div className="flex justify-between items-start">
-                      <CardTitle className="text-lg line-clamp-1">
-                        {stream.title}
-                      </CardTitle>
-                      <Badge
-                        variant={
-                          stream.isLive
-                            ? "destructive"
-                            : stream.streamStatus === "scheduled"
-                            ? "secondary"
-                            : "outline"
-                        }
-                      >
-                        {stream.isLive
-                          ? "LIVE"
-                          : stream.streamStatus.toUpperCase()}
-                      </Badge>
-                    </div>
-                    <p className="text-sm text-gray-500 line-clamp-2">
-                      {stream.description || "No description"}
-                    </p>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-3">
-                      <div className="flex items-center text-sm">
-                        <User className="w-4 h-4 mr-2 text-gray-500" />
-                        <span className="font-medium">
-                          {stream.streamer.name}
-                        </span>
-                      </div>
-                      <div className="flex items-center text-sm">
-                        <Users className="w-4 h-4 mr-2 text-gray-500" />
-                        <span>{stream.currentViewers} viewers</span>
-                      </div>
-                      {stream.liveStartedAt && (
-                        <div className="flex items-center text-sm">
-                          <Clock className="w-4 h-4 mr-2 text-gray-500" />
-                          <span>
-                            Started: {formatDate(stream.liveStartedAt)}
-                          </span>
-                        </div>
-                      )}
-                      <div className="flex gap-2 mt-4">
-                        {isUserStreamer(stream) ? (
-                          <>
-                            {stream.isLive ? (
-                              <Button
-                                size="sm"
-                                variant="destructive"
-                                onClick={stopBroadcast}
-                                disabled={isLoading}
-                              >
-                                <Square className="w-4 h-4 mr-2" />
-                                End Stream
-                              </Button>
-                            ) : (
-                              <Button
-                                size="sm"
-                                onClick={() =>
-                                  startExistingBroadcast(stream.id)
-                                }
-                                disabled={
-                                  isLoading ||
-                                  stream.streamStatus === "ended" ||
-                                  stream.streamStatus === "cancelled"
-                                }
-                              >
-                                <Play className="w-4 h-4 mr-2" />
-                                Go Live
-                              </Button>
-                            )}
-                          </>
-                        ) : (
-                          <>
-                            {stream.isLive ? (
-                              <Button
-                                size="sm"
-                                onClick={() => joinAsViewer(stream.id)}
-                                disabled={
-                                  isLoading ||
-                                  (isJoined && activeStream?.id === stream.id)
-                                }
-                              >
-                                <Eye className="w-4 h-4 mr-2" />
-                                Watch Live
-                              </Button>
-                            ) : (
-                              <Button size="sm" variant="outline" disabled>
-                                <Clock className="w-4 h-4 mr-2" />
-                                {stream.streamStatus === "scheduled"
-                                  ? "Scheduled"
-                                  : "Ended"}
-                              </Button>
-                            )}
-                          </>
-                        )}
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
-        </TabsContent>
-
-        {/* Broadcast/Watching Tab */}
-        {activeStream && (
-          <TabsContent value="broadcast">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              {/* Video Section */}
-              <div className="lg:col-span-2 space-y-4">
-                <Card>
-                  <CardHeader>
-                    <div className="flex justify-between items-center">
-                      <CardTitle>{activeStream.title}</CardTitle>
-                      <div className="flex items-center gap-2">
-                        <Badge
-                          variant={isBroadcasting ? "destructive" : "secondary"}
-                        >
-                          {isBroadcasting ? "LIVE" : "WATCHING"}
-                        </Badge>
-                        <Badge variant="outline">
-                          <Users className="w-3 h-3 mr-1" />
-                          {remoteUsers.size} online
-                        </Badge>
-                        {!isBroadcasting && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={leaveViewerStream}
-                          >
-                            Leave Stream
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="relative bg-black rounded-lg overflow-hidden aspect-video min-h-[400px]">
-                      {/* Main Video Container */}
-                      <div
-                        ref={remoteVideoContainerRef}
-                        className="w-full h-full"
-                      >
-                        {remoteUsers.size === 0 && !isBroadcasting && (
-                          <div className="flex items-center justify-center h-full">
-                            <div className="text-center">
-                              <Video className="w-16 h-16 mx-auto text-gray-400 mb-4" />
-                              <p className="text-gray-300">
-                                {isJoined
-                                  ? "Connected, waiting for broadcaster to start video..."
-                                  : "Not connected to stream"}
-                              </p>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Local Video Preview (Picture-in-Picture for broadcaster) */}
-                      {isBroadcasting && localVideoTrack && (
-                        <div className="absolute bottom-4 right-4 w-48 h-32 rounded-lg overflow-hidden border-2 border-white shadow-lg">
-                          <div className="relative w-full h-full bg-black">
-                            <div
-                              ref={localVideoContainerRef}
-                              className="w-full h-full"
-                            />
-                            <div className="absolute top-2 left-2 bg-red-600 text-white text-xs px-2 py-1 rounded">
-                              YOU
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Stream Info */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg">
-                      Stream Information
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <Label className="text-sm text-gray-500">Status</Label>
-                        <p className="font-medium">
-                          {activeStream.streamStatus}
-                        </p>
-                      </div>
-                      <div>
-                        <Label className="text-sm text-gray-500">Viewers</Label>
-                        <p className="font-medium">
-                          {activeStream.currentViewers} /{" "}
-                          {activeStream.maxViewers}
-                        </p>
-                      </div>
-                      <div>
-                        <Label className="text-sm text-gray-500">Type</Label>
-                        <p className="font-medium capitalize">
-                          {activeStream.streamType}
-                        </p>
-                      </div>
-                      <div>
-                        <Label className="text-sm text-gray-500">Started</Label>
-                        <p className="font-medium">
-                          {formatDate(activeStream.liveStartedAt || "")}
-                        </p>
-                      </div>
-                    </div>
-                    <div>
-                      <Label className="text-sm text-gray-500">
-                        Description
-                      </Label>
-                      <p className="mt-1">
-                        {activeStream.description || "No description"}
-                      </p>
-                    </div>
-                    <div className="pt-4 border-t">
-                      <Label className="text-sm text-gray-500 mb-2 block">
-                        Streamer
-                      </Label>
-                      <div className="flex items-center">
-                        <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center mr-3">
-                          <User className="w-5 h-5 text-gray-500" />
-                        </div>
-                        <div>
-                          <p className="font-medium">
-                            {activeStream.streamer.name}
-                          </p>
-                          <p className="text-sm text-gray-500">
-                            {activeStream.streamer.email}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-
-              {/* Chat Section */}
-              <div className="space-y-4">
-                <Card className="h-[500px] flex flex-col">
-                  <CardHeader className="pb-3">
-                    <div className="flex justify-between items-center">
-                      <CardTitle className="text-lg">Live Chat</CardTitle>
-                      <Badge variant="outline">
-                        <Users className="w-3 h-3 mr-1" />
-                        {chatMessages.length}
-                      </Badge>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="flex-1 overflow-hidden flex flex-col">
-                    {/* Chat Messages */}
-                    <div className="flex-1 overflow-y-auto space-y-3 mb-4 pr-2">
-                      {chatMessages.map((msg, index) => (
-                        <div key={index} className="p-3 bg-gray-50 rounded-lg">
-                          <div className="flex justify-between mb-1">
-                            <span className="font-medium text-sm">
-                              {msg.user}
-                            </span>
-                            <span className="text-xs text-gray-500">
-                              {msg.time}
-                            </span>
-                          </div>
-                          <p className="text-sm">{msg.message}</p>
-                        </div>
-                      ))}
-                      {chatMessages.length === 0 && (
-                        <div className="text-center text-gray-500 py-8">
-                          <MessageSquare className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                          <p>No messages yet</p>
-                          <p className="text-sm">Be the first to chat!</p>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Chat Input */}
-                    <div className="border-t pt-4">
-                      <div className="flex gap-2">
-                        <Input
-                          placeholder="Type your message..."
-                          value={message}
-                          onChange={(e) => setMessage(e.target.value)}
-                          onKeyPress={(e) => e.key === "Enter" && sendMessage()}
-                          disabled={!isChatEnabled || !isJoined}
-                          className="flex-1"
-                        />
-                        <Button
-                          onClick={sendMessage}
-                          disabled={
-                            !message.trim() || !isChatEnabled || !isJoined
-                          }
-                        >
-                          Send
-                        </Button>
-                      </div>
-                      <div className="flex items-center justify-between mt-2">
-                        <Label className="flex items-center text-sm cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={isChatEnabled}
-                            onChange={() => setIsChatEnabled(!isChatEnabled)}
-                            className="mr-2"
-                            disabled={!isJoined}
-                          />
-                          Enable Chat
-                        </Label>
-                        <span className="text-xs text-gray-500">
-                          {chatMessages.length} messages
-                        </span>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Viewer List */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg">Viewers</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-2">
-                      {Array.from(remoteUsers.values()).map((user) => (
-                        <div
-                          key={user.uid}
-                          className="flex items-center p-2 hover:bg-gray-50 rounded"
-                        >
-                          <User className="w-4 h-4 mr-2 text-gray-500" />
-                          <span>
-                            {user.uid === currentUserId
-                              ? "You"
-                              : `Viewer ${user.uid}`}
-                          </span>
-                        </div>
-                      ))}
-                      {remoteUsers.size === 0 && (
-                        <div className="text-center py-4">
-                          <Users className="w-8 h-8 mx-auto text-gray-400 mb-2" />
-                          <p className="text-gray-500">No viewers yet</p>
-                        </div>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            </div>
-          </TabsContent>
-        )}
-
-        {/* My Streams Tab */}
-        <TabsContent value="my-streams">
-          <Card>
-            <CardHeader>
-              <CardTitle>My Streams</CardTitle>
-              <p className="text-gray-500">Manage your live streams</p>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {streams
-                    .filter((stream) => isUserStreamer(stream))
-                    .map((stream) => (
-                      <Card key={stream.id}>
-                        <CardContent className="p-4">
-                          <div className="flex justify-between items-start mb-2">
-                            <h3 className="font-medium line-clamp-1">
-                              {stream.title}
-                            </h3>
-                            <Badge
-                              variant={
-                                stream.isLive
-                                  ? "destructive"
-                                  : stream.streamStatus === "scheduled"
-                                  ? "secondary"
-                                  : "outline"
-                              }
-                            >
-                              {stream.isLive
-                                ? "LIVE"
-                                : stream.streamStatus.toUpperCase()}
-                            </Badge>
-                          </div>
-                          <p className="text-sm text-gray-500 mb-3 line-clamp-2">
-                            {stream.description || "No description"}
-                          </p>
-                          <div className="flex justify-between items-center">
-                            <div className="text-sm">
-                              <div className="flex items-center">
-                                <Users className="w-3 h-3 mr-1" />
-                                {stream.currentViewers} viewers
-                              </div>
-                            </div>
-                            <div className="flex gap-2">
-                              {stream.isLive ? (
-                                <Button
-                                  size="sm"
-                                  variant="destructive"
-                                  onClick={stopBroadcast}
-                                  disabled={isLoading}
-                                >
-                                  End
-                                </Button>
-                              ) : (
-                                <Button
-                                  size="sm"
-                                  onClick={() =>
-                                    startExistingBroadcast(stream.id)
-                                  }
-                                  disabled={
-                                    isLoading ||
-                                    stream.streamStatus === "ended" ||
-                                    stream.streamStatus === "cancelled"
-                                  }
-                                >
-                                  Go Live
-                                </Button>
-                              )}
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                </div>
-
-                {streams.filter((stream) => isUserStreamer(stream)).length ===
-                  0 && (
-                  <div className="text-center py-8">
-                    <Video className="w-12 h-12 mx-auto text-gray-400 mb-4" />
-                    <h3 className="text-lg font-medium mb-2">No streams yet</h3>
-                    <p className="text-gray-500 mb-4">
-                      Create your first stream to get started
-                    </p>
-                    <Button onClick={() => setShowCreateDialog(true)}>
-                      <Plus className="w-4 h-4 mr-2" />
-                      Create First Stream
-                    </Button>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
     </div>
   );
 };
