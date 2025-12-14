@@ -1,6 +1,13 @@
 import React, { useState, useEffect } from "react";
 import LiveStreamChat from "./Chat";
-// import { useGetProfileQuery, useGetUsersQuery } from "@/redux/api/userApi";
+import { jwtDecode } from "jwt-decode";
+
+interface JwtPayload {
+  authId: string;
+  userId: string;
+  email: string;
+  role: string;
+}
 
 const ChatContainer: React.FC = () => {
   // State to handle loading user data
@@ -17,12 +24,20 @@ const ChatContainer: React.FC = () => {
       setIsLoading(true);
       try {
         // Get user ID from localStorage or API
-        const token = localStorage.getItem("token");
+        const token = localStorage.getItem("accessToken") || localStorage.getItem("token");
         if (token) {
-          // Decode token or fetch user info
-          // For now, using mock data
-          setUserId("693b45940147092eee2169ab");
-          setStreamId("693dd5011b47fc73fcaebeaf");
+          // Decode token to get user info
+          try {
+            const decoded = jwtDecode<JwtPayload>(token);
+            const currentUserId = decoded.authId || decoded.userId;
+            setUserId(currentUserId);
+            
+            // For now, using mock stream ID or getting from other source
+            // Ideally this should come from props or URL
+            setStreamId("693f4a32a410ac6795000f89");
+          } catch (decodeError) {
+            console.error("Error decoding token:", decodeError);
+          }
         }
       } catch (error) {
         console.error("Failed to load user data:", error);
