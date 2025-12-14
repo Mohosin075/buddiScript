@@ -146,8 +146,26 @@ const LiveStreamChat: React.FC<LiveStreamChatProps> = ({
     });
 
     // Listen for new messages from backend
-    socketInstance.on("new-message", (message: ChatMessage) => {
-      console.log("📨 New message received from backend:", message);
+    socketInstance.on("new-message", (payload: any) => {
+      console.log("📨 New message received from backend (raw):", payload);
+
+      // Handle potential payload wrapping
+      let message: ChatMessage;
+      if (payload?.data && payload.data.id) {
+        message = payload.data;
+      } else if (payload?.message && payload.message.id) { 
+          // Sometimes backend might send { success: true, message: { ... } }
+          message = payload.message;
+      } else {
+         message = payload;
+      }
+
+      if (!message || !message.id) {
+        console.warn("⚠️ Received invalid message format from socket:", payload);
+        return;
+      }
+
+      console.log("✨ Processing message:", message);
 
       // Add message to state (check for duplicates)
       setMessages((prev) => {
@@ -155,12 +173,13 @@ const LiveStreamChat: React.FC<LiveStreamChatProps> = ({
         if (!exists) {
           return [...prev, message];
         }
+        console.log("🚫 Duplicate message ignored:", message.id);
         return prev;
       });
 
       // Refresh participants list when new message arrives
       fetchParticipants();
-
+      
       scrollToBottom();
     });
 
@@ -352,11 +371,22 @@ const LiveStreamChat: React.FC<LiveStreamChatProps> = ({
         return;
       }
 
-      const savedMessage = await response.json();
-      console.log("✅ Message saved to database:", savedMessage);
+      const responseData = await response.json();
+      console.log("✅ Message saved to database:", responseData);
 
-      // Add message to state immediately (optimistic update)
-      setMessages((prev) => [...prev, savedMessage]);
+      if (!responseData.success || !responseData.data) {
+        throw new Error("Invalid response format");
+      }
+
+      const savedMessage = responseData.data;
+
+      // Add message to state (check for duplicates in case socket arrived first)
+      setMessages((prev) => {
+        if (prev.some((msg) => msg.id === savedMessage.id)) {
+          return prev;
+        }
+        return [...prev, savedMessage];
+      });
 
       // Clear input
       setNewMessage("");
