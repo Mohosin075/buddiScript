@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import LiveStreamChat from "./Chat";
+// import { useGetProfileQuery, useGetUsersQuery } from "@/redux/api/userApi";
 
 const ChatContainer: React.FC = () => {
   // State to handle loading user data
@@ -7,6 +8,9 @@ const ChatContainer: React.FC = () => {
   const [streamId, setStreamId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  // const { data: usersData, isLoading: usersIsLoading } = useGetProfileQuery();
+
+  // console.log("Users Data:", usersData, usersIsLoading);
   useEffect(() => {
     // Simulate loading user data
     const loadUserData = async () => {
@@ -17,7 +21,7 @@ const ChatContainer: React.FC = () => {
         if (token) {
           // Decode token or fetch user info
           // For now, using mock data
-          setUserId("693dd5011b47fc73fcaebeaf");
+          setUserId("693b45940147092eee2169ab");
           setStreamId("693dd5011b47fc73fcaebeaf");
         }
       } catch (error) {
@@ -42,9 +46,7 @@ const ChatContainer: React.FC = () => {
     return (
       <div className="h-full bg-black flex items-center justify-center">
         <div className="text-center">
-          <p className="text-gray-500 text-sm">
-            Please login to chat
-          </p>
+          <p className="text-gray-500 text-sm">Please login to chat</p>
         </div>
       </div>
     );
@@ -52,7 +54,7 @@ const ChatContainer: React.FC = () => {
 
   return (
     <div className="h-full bg-black">
-       <LiveStreamChat streamId={streamId} userId={userId} />
+      <LiveStreamChat streamId={streamId} userId={userId} />
     </div>
   );
 };

@@ -144,6 +144,18 @@ const Live = () => {
   const clientRef = useRef<IAgoraRTCClient | null>(null);
   const localVideoContainerRef = useRef<HTMLDivElement>(null);
   const remoteVideoContainerRef = useRef<HTMLDivElement>(null);
+
+  // Effect to play local video track when available and container is ready
+  useEffect(() => {
+    if (localVideoTrack && localVideoContainerRef.current) {
+      console.log("Playing local video track");
+      localVideoContainerRef.current.innerHTML = "";
+      const videoElement = document.createElement("div");
+      videoElement.className = "w-full h-full";
+      localVideoContainerRef.current.appendChild(videoElement);
+      localVideoTrack.play(videoElement);
+    }
+  }, [localVideoTrack, isBroadcasting, activeStream]);
   const remoteUsersRef = useRef<Map<string, RemoteUser>>(new Map());
 
   // Get auth token from localStorage
@@ -582,15 +594,6 @@ const Live = () => {
       // Publish local tracks if broadcaster
       if (tokenData.role === "publisher") {
         await clientRef.current!.publish([cameraTrack, microphoneTrack]);
-
-        // Play local video preview
-        if (localVideoContainerRef.current && cameraTrack) {
-          localVideoContainerRef.current.innerHTML = "";
-          const videoElement = document.createElement("div");
-          videoElement.className = "w-full h-full";
-          localVideoContainerRef.current.appendChild(videoElement);
-          cameraTrack.play(videoElement);
-        }
       }
 
       console.log("Broadcaster setup complete");
