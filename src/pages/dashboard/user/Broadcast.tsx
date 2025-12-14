@@ -1,12 +1,15 @@
+import { useState } from "react";
 import ChatContainer from "./ChatContainer";
 import Live from "./Live";
 
 const Broadcast = () => {
+  const [currentStreamId, setCurrentStreamId] = useState<string | null>(null);
+
   return (
     <div className="flex flex-col h-screen bg-black overflow-hidden">
       {/* Top Section: Video Player */}
       <div className="w-full h-[45vh] relative shrink-0">
-        <Live />
+        <Live onStreamChange={setCurrentStreamId} />
       </div>
 
       {/* Middle Section: Tags */}
@@ -27,7 +30,7 @@ const Broadcast = () => {
 
       {/* Bottom Section: Live Chat */}
       <div className="flex-1 overflow-hidden">
-        <ChatContainer />
+        <ChatContainer streamId={currentStreamId} />
       </div>
     </div>
   );

@@ -106,12 +106,23 @@ interface AgoraTokenResponse {
   streamingMode: string;
 }
 
-const Live = () => {
+interface LiveProps {
+  onStreamChange?: (streamId: string | null) => void;
+}
+
+const Live = ({ onStreamChange }: LiveProps = {}) => {
   const [isBroadcasting, setIsBroadcasting] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isCreatingStream, setIsCreatingStream] = useState(false);
   const [streams, setStreams] = useState<Stream[]>([]);
   const [activeStream, setActiveStream] = useState<Stream | null>(null);
+
+  // Notify parent component about stream change
+  useEffect(() => {
+    if (onStreamChange) {
+      onStreamChange(activeStream ? activeStream.id : null);
+    }
+  }, [activeStream, onStreamChange]);
   const [localVideoTrack, setLocalVideoTrack] =
     useState<ICameraVideoTrack | null>(null);
   const [localAudioTrack, setLocalAudioTrack] =
